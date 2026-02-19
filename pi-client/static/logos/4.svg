@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" rx="24" fill="#2a1050"/>
+  <!-- Saturn planet -->
+  <circle cx="100" cy="100" r="36" fill="#00d4ff"/>
+  <!-- Ring -->
+  <ellipse cx="100" cy="100" rx="70" ry="20" fill="none" stroke="#00d4ff" stroke-width="9" transform="rotate(-20,100,100)"/>
+</svg>

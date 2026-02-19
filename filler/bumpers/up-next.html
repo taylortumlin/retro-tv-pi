@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pi TV - Up Next</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#000}
+body{font-family:'Courier New',monospace}
+
+/* Animated deep blue background */
+.bg{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:linear-gradient(170deg,#000820,#001050,#000830,#001040);
+  background-size:300% 300%;
+  animation:bgMove 25s ease infinite;
+}
+
+/* Subtle moving grid pattern */
+.grid-bg{
+  position:fixed;top:0;left:0;width:200%;height:200%;
+  background-image:
+    linear-gradient(rgba(48,96,208,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(48,96,208,.06) 1px,transparent 1px);
+  background-size:60px 60px;
+  animation:gridScroll 20s linear infinite;
+  pointer-events:none;z-index:1;
+}
+
+/* CRT */
+.crt::before{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:repeating-linear-gradient(to bottom,transparent 0px,transparent 1px,rgba(0,0,0,.1) 1px,rgba(0,0,0,.1) 3px);
+  pointer-events:none;z-index:1000;
+}
+.crt::after{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.45) 100%);
+  pointer-events:none;z-index:1001;
+}
+
+/* Header */
+.header{
+  position:relative;z-index:10;height:110px;
+  background:linear-gradient(180deg,rgba(0,16,96,.9),rgba(0,8,48,.9));
+  border-bottom:3px solid #3060d0;
+  display:flex;align-items:center;padding:0 60px;
+  box-shadow:0 4px 30px rgba(0,0,0,.5);
+}
+.logo{
+  font-size:56px;font-weight:bold;letter-spacing:5px;color:#ffc800;
+  text-shadow:0 0 25px rgba(255,200,0,.4);
+  animation:logoShimmer 3s ease-in-out infinite alternate;
+}
+.logo .tv{color:#3b9eff;text-shadow:0 0 25px rgba(59,158,255,.4)}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:30px}
+.header-tagline{font-size:18px;color:#6090cc;letter-spacing:3px;animation:taglineFade 5s ease-in-out infinite}
+
+/* Red UP NEXT banner */
+.banner{
+  position:relative;z-index:10;height:80px;
+  background:linear-gradient(90deg,#c00,#a00 50%,#c00);
+  background-size:200% 100%;
+  animation:bannerShift 8s ease infinite;
+  display:flex;align-items:center;padding:0 60px;
+  border-bottom:2px solid #ff4444;
+  box-shadow:0 4px 20px rgba(200,0,0,.3);
+}
+.banner-text{
+  font-size:40px;font-weight:bold;color:#fff;
+  letter-spacing:8px;text-transform:uppercase;
+  text-shadow:0 2px 10px rgba(0,0,0,.5);
+}
+.banner-dots{margin-left:auto;display:flex;gap:8px}
+.banner-dot{
+  width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.5);
+  animation:dotPulse 2s ease-in-out infinite;
+}
+
+/* Scrolling channel list */
+.scroll-area{
+  position:relative;z-index:10;
+  height:calc(1080px - 110px - 80px - 70px);
+  overflow:hidden;
+}
+.scroll-track{
+  display:flex;flex-direction:column;
+  animation:scrollUp 60s linear infinite;
+}
+.channel-row{
+  display:flex;align-items:center;
+  height:76px;min-height:76px;
+  padding:0 60px;
+  border-bottom:1px solid rgba(48,96,208,.12);
+  transition:all .4s ease;
+}
+.channel-row:nth-child(even){background:rgba(0,16,64,.25)}
+.channel-row:nth-child(odd){background:rgba(0,8,32,.15)}
+
+.ch-num{
+  width:80px;font-size:26px;font-weight:bold;color:#ffc800;text-align:center;
+  text-shadow:0 0 10px rgba(255,200,0,.2);
+}
+.ch-icon{
+  width:50px;height:50px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;margin-right:20px;
+  background:rgba(0,16,64,.5);border:1px solid rgba(48,96,208,.3);
+}
+.ch-name{
+  flex:1;font-size:22px;color:#ececec;letter-spacing:1px;
+}
+.ch-genre{
+  font-size:14px;color:#506888;letter-spacing:2px;text-transform:uppercase;
+  padding:4px 12px;border:1px solid rgba(48,96,208,.2);border-radius:12px;
+}
+/* Glow bar that sweeps through the list */
+.glow-bar{
+  position:absolute;left:0;width:100%;height:76px;
+  background:linear-gradient(180deg,transparent,rgba(59,158,255,.08),rgba(255,200,0,.05),transparent);
+  pointer-events:none;z-index:11;
+  animation:glowSweep 6s ease-in-out infinite;
+}
+
+/* Bottom bar */
+.bottom{
+  position:fixed;bottom:0;left:0;width:100%;height:70px;z-index:10;
+  background:linear-gradient(180deg,rgba(0,8,48,.95),rgba(0,4,24,.95));
+  border-top:2px solid #3060d0;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.bottom-scroll{
+  display:flex;gap:50px;white-space:nowrap;
+  animation:bottomScroll 30s linear infinite;
+  font-size:16px;color:#6090cc;letter-spacing:2px;
+}
+.bottom-scroll .accent{color:#ffc800}
+.bottom-scroll .sep{color:#3060d0;margin:0 5px}
+
+/* Ambient light streaks */
+.streaks{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:5;overflow:hidden;
+}
+.streak{
+  position:absolute;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(59,158,255,.2),transparent);
+  animation:streakMove linear infinite;
+}
+
+@keyframes bgMove{0%{background-position:0% 0%}50%{background-position:100% 100%}100%{background-position:0% 0%}}
+@keyframes gridScroll{0%{transform:translate(0,0)}100%{transform:translate(-60px,-60px)}}
+@keyframes logoShimmer{0%{filter:brightness(1)}100%{filter:brightness(1.2)}}
+@keyframes taglineFade{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes bannerShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes dotPulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+@keyframes scrollUp{
+  0%{transform:translateY(0)}
+  100%{transform:translateY(-50%)}
+}
+@keyframes glowSweep{
+  0%{top:0}50%{top:calc(100% - 76px)}100%{top:0}
+}
+@keyframes bottomScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes streakMove{
+  0%{transform:translateX(-100%);opacity:0}
+  10%{opacity:1}90%{opacity:1}
+  100%{transform:translateX(1920px);opacity:0}
+}
+</style>
+</head>
+<body class="crt">
+<div class="bg"></div>
+<div class="grid-bg"></div>
+<div class="streaks" id="streaks"></div>
+
+<div class="header">
+  <div class="logo">Pi <span class="tv">TV</span></div>
+  <div class="header-right">
+    <div class="header-tagline">20 Channels &bull; Always On</div>
+  </div>
+</div>
+
+<div class="banner">
+  <div class="banner-text">Your Lineup</div>
+  <div class="banner-dots">
+    <div class="banner-dot" style="animation-delay:0s"></div>
+    <div class="banner-dot" style="animation-delay:.3s"></div>
+    <div class="banner-dot" style="animation-delay:.6s"></div>
+  </div>
+</div>
+
+<div class="scroll-area">
+  <div class="glow-bar"></div>
+  <div class="scroll-track" id="track"></div>
+</div>
+
+<div class="bottom">
+  <div class="bottom-scroll" id="bottom"></div>
+</div>
+
+<script>
+const channels = [
+  {n:1,  name:"Crime & Justice",    genre:"Crime",     icon:"\u2696"},
+  {n:2,  name:"Prestige Drama",     genre:"Drama",     icon:"\ud83c\udfad"},
+  {n:3,  name:"Comedy Central",     genre:"Comedy",    icon:"\ud83d\ude02"},
+  {n:4,  name:"Sci-Fi & Fantasy",   genre:"Sci-Fi",    icon:"\ud83d\ude80"},
+  {n:5,  name:"Thriller & Mystery", genre:"Thriller",  icon:"\ud83d\udd0d"},
+  {n:6,  name:"Binge TV",           genre:"All Shows", icon:"\ud83d\udcfa"},
+  {n:7,  name:"Action Packed",      genre:"Action",    icon:"\ud83d\udca5"},
+  {n:8,  name:"Romance & Family",   genre:"Romance",   icon:"\u2764\ufe0f"},
+  {n:9,  name:"9-1-1 24/7",         genre:"Dedicated", icon:"\ud83d\ude92"},
+  {n:10, name:"Reality & Variety",   genre:"Reality",   icon:"\u2b50"},
+  {n:11, name:"Movies",             genre:"Film",      icon:"\ud83c\udfac"},
+  {n:12, name:"Blue Bloods 24/7",   genre:"Dedicated", icon:"\ud83d\udc6e"},
+  {n:13, name:"Downton Abbey 24/7", genre:"Dedicated", icon:"\ud83c\udff0"},
+  {n:14, name:"Animated",           genre:"Animation", icon:"\ud83c\udf1f"},
+  {n:15, name:"British Telly",      genre:"British",   icon:"\ud83c\uddf1\ud83c\udde7"},
+  {n:16, name:"Workplace",          genre:"Workplace", icon:"\ud83c\udfe2"},
+  {n:17, name:"Superheroes",        genre:"Heroes",    icon:"\ud83e\uddb8"},
+  {n:18, name:"Horror & Dark",      genre:"Horror",    icon:"\ud83d\udc80"},
+  {n:19, name:"Legal Eagles",       genre:"Legal",     icon:"\ud83d\udcdc"},
+  {n:20, name:"Comfort TV",         genre:"Comfort",   icon:"\u2615"}
+];
+
+// Build scrolling channel list (duplicate for seamless loop)
+const track = document.getElementById('track');
+const allCh = [...channels, ...channels];
+allCh.forEach(ch => {
+  const row = document.createElement('div');
+  row.className = 'channel-row';
+  row.innerHTML = `
+    <span class="ch-num">${ch.n}</span>
+    <span class="ch-icon">${ch.icon}</span>
+    <span class="ch-name">${ch.name}</span>
+    <span class="ch-genre">${ch.genre}</span>
+  `;
+  track.appendChild(row);
+});
+
+// Bottom scroller
+const bottom = document.getElementById('bottom');
+const msgs = [
+  '<span class="accent">Pi TV</span>',
+  '<span class="sep">\u2022</span>',
+  'Atlanta',
+  '<span class="sep">\u2022</span>',
+  '20 Channels of Non-Stop Entertainment',
+  '<span class="sep">\u2022</span>',
+  '<span class="accent">Crime</span> \u2022 <span class="accent">Drama</span> \u2022 <span class="accent">Comedy</span> \u2022 <span class="accent">Sci-Fi</span> \u2022 <span class="accent">Action</span> \u2022 <span class="accent">Horror</span> \u2022 <span class="accent">Movies</span>',
+  '<span class="sep">\u2022</span>',
+  'Always On \u2022 Always Free',
+];
+bottom.innerHTML = [...msgs, ...msgs].map(m => `<span>${m}</span>`).join('');
+
+// Light streaks
+const streaks = document.getElementById('streaks');
+function spawnStreak() {
+  const s = document.createElement('div');
+  s.className = 'streak';
+  const w = 200 + Math.random() * 600;
+  s.style.cssText = `
+    top:${Math.random()*100}%;width:${w}px;
+    animation-duration:${3+Math.random()*5}s;
+  `;
+  streaks.appendChild(s);
+  setTimeout(() => s.remove(), 9000);
+}
+setInterval(spawnStreak, 600);
+</script>
+</body>
+</html>

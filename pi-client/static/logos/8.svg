@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" rx="24" fill="#3a0a1e"/>
+  <!-- Heart -->
+  <path d="M100,155 L55,105 Q30,75 55,55 Q80,35 100,65 Q120,35 145,55 Q170,75 145,105 Z" fill="#ff4081"/>
+</svg>

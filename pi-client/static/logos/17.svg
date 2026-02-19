@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" rx="24" fill="#1a2a7a"/>
+  <!-- Starburst / superhero emblem -->
+  <g fill="#e53935">
+    <!-- Starburst shape -->
+    <polygon points="100,25 115,72 165,50 130,90 175,100 130,112 165,150 115,128 100,175 85,128 35,150 70,112 25,100 70,90 35,50 85,72"/>
+    <!-- Inner circle -->
+    <circle cx="100" cy="100" r="28" fill="#1a2a7a"/>
+    <!-- S shape for super -->
+    <path d="M88,85 Q88,78 100,78 Q112,78 112,88 Q112,96 100,100 Q88,104 88,112 Q88,122 100,122 Q112,122 112,115" fill="none" stroke="#e53935" stroke-width="8" stroke-linecap="round"/>
+  </g>
+</svg>

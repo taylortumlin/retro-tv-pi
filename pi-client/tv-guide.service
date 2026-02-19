@@ -1,0 +1,20 @@
+[Unit]
+Description=Pi TV Guide Dashboard
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=120
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=ttumlin
+WorkingDirectory=/home/ttumlin/pi-tv
+ExecStart=/usr/bin/python3 -u /home/ttumlin/pi-tv/tv_guide.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tv-guide
+
+[Install]
+WantedBy=multi-user.target

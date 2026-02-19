@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pi TV - Please Stand By</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#000}
+body{font-family:'Courier New',monospace}
+
+/* Animated color bars that shift hue */
+.bars-wrap{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  animation:hueRotate 30s linear infinite;
+}
+.bars{
+  position:absolute;top:0;left:0;width:100%;height:67%;display:flex;
+}
+.bar{flex:1;transition:background 2s}
+.bar-1{background:#c0c0c0}.bar-2{background:#c0c000}.bar-3{background:#00c0c0}
+.bar-4{background:#00c000}.bar-5{background:#c000c0}.bar-6{background:#c00000}
+.bar-7{background:#0000c0}
+
+.bars-mid{position:absolute;top:67%;left:0;width:100%;height:8%;display:flex}
+.bm{flex:1}
+.bm-1{background:#0000c0}.bm-2{background:#131313}.bm-3{background:#c000c0}
+.bm-4{background:#131313}.bm-5{background:#00c0c0}.bm-6{background:#131313}
+.bm-7{background:#c0c0c0}
+
+.bars-bot{position:absolute;top:75%;left:0;width:100%;height:25%;background:#0a0a2e}
+
+/* Animated interference lines */
+.interference{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:50;overflow:hidden;
+}
+.int-line{
+  position:absolute;left:0;width:100%;
+  background:rgba(255,255,255,.04);
+  animation:interfereSweep linear infinite;
+}
+
+/* Static/snow overlay with varying intensity */
+.snow{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  z-index:60;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:snowPulse 6s ease-in-out infinite;
+}
+
+/* Center card */
+.overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:80;
+}
+.card{
+  background:rgba(0,0,0,.88);
+  border:3px solid #ffc800;border-radius:20px;
+  padding:50px 90px;text-align:center;
+  backdrop-filter:blur(10px);
+  animation:cardPulse 5s ease-in-out infinite;
+  box-shadow:0 0 60px rgba(255,200,0,.1),inset 0 0 60px rgba(0,0,0,.3);
+}
+.logo{
+  font-size:68px;font-weight:bold;letter-spacing:6px;
+  color:#ffc800;
+  text-shadow:0 0 30px rgba(255,200,0,.5);
+  animation:logoFloat 4s ease-in-out infinite;
+}
+.logo .tv{color:#3b9eff;text-shadow:0 0 30px rgba(59,158,255,.5)}
+.divider{
+  width:400px;height:2px;margin:15px auto 25px;
+  background:linear-gradient(90deg,transparent,#ffc800,transparent);
+  animation:dividerPulse 3s ease-in-out infinite alternate;
+}
+.message{
+  font-size:50px;font-weight:bold;color:#ececec;
+  letter-spacing:5px;text-transform:uppercase;
+  animation:textFlicker 10s step-end infinite;
+}
+.sub{
+  font-size:20px;color:#6090cc;margin-top:20px;letter-spacing:2px;
+  animation:subFade 6s ease-in-out infinite;
+}
+
+/* Channel badges that light up randomly */
+.grid{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  gap:8px;margin-top:35px;width:900px;
+}
+.badge{
+  background:rgba(0,0,0,.7);border:1px solid #203060;border-radius:6px;
+  padding:8px 10px;text-align:center;
+  font-size:13px;color:#506888;letter-spacing:1px;
+  transition:all .6s ease;
+}
+.badge .num{color:#ffc800;font-weight:bold;font-size:16px;display:block;margin-bottom:2px}
+.badge.lit{
+  border-color:#ffc800;color:#ececec;
+  background:rgba(255,200,0,.08);
+  box-shadow:0 0 15px rgba(255,200,0,.15);
+}
+
+/* VHS tracking glitch */
+.vhs-track{
+  position:fixed;left:0;width:100%;z-index:200;
+  height:40px;pointer-events:none;
+  background:linear-gradient(
+    180deg,transparent,rgba(255,255,255,.03) 30%,
+    rgba(255,255,255,.06) 50%,rgba(255,255,255,.03) 70%,transparent
+  );
+  animation:vhsSweep 8s linear infinite;
+}
+
+/* CRT */
+.crt::before{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:repeating-linear-gradient(to bottom,transparent 0px,transparent 1px,rgba(0,0,0,.1) 1px,rgba(0,0,0,.1) 3px);
+  pointer-events:none;z-index:1000;
+}
+.crt::after{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.45) 100%);
+  pointer-events:none;z-index:1001;
+}
+
+/* Roving spotlight on the bars */
+.spotlight{
+  position:fixed;top:0;left:0;width:100%;height:67%;
+  pointer-events:none;z-index:40;
+  background:radial-gradient(circle 300px at var(--sx,50%) var(--sy,50%),rgba(255,255,255,.06),transparent 70%);
+}
+
+@keyframes hueRotate{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}
+@keyframes interfereSweep{0%{top:-100px;opacity:0}5%{opacity:1}95%{opacity:1}100%{top:1180px;opacity:0}}
+@keyframes snowPulse{0%,100%{opacity:.03}30%{opacity:.06}60%{opacity:.02}80%{opacity:.05}}
+@keyframes cardPulse{0%,100%{transform:scale(1);box-shadow:0 0 60px rgba(255,200,0,.1)}50%{transform:scale(1.005);box-shadow:0 0 80px rgba(255,200,0,.15)}}
+@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes dividerPulse{0%{width:300px;opacity:.6}100%{width:450px;opacity:1}}
+@keyframes textFlicker{
+  0%,8%,10%,50%,52%,100%{opacity:1}
+  9%{opacity:.7}51%{opacity:.8}
+}
+@keyframes subFade{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes vhsSweep{0%{top:-40px}100%{top:1120px}}
+</style>
+</head>
+<body class="crt">
+
+<div class="bars-wrap">
+  <div class="bars">
+    <div class="bar bar-1"></div><div class="bar bar-2"></div><div class="bar bar-3"></div>
+    <div class="bar bar-4"></div><div class="bar bar-5"></div><div class="bar bar-6"></div>
+    <div class="bar bar-7"></div>
+  </div>
+  <div class="bars-mid">
+    <div class="bm bm-1"></div><div class="bm bm-2"></div><div class="bm bm-3"></div>
+    <div class="bm bm-4"></div><div class="bm bm-5"></div><div class="bm bm-6"></div>
+    <div class="bm bm-7"></div>
+  </div>
+  <div class="bars-bot"></div>
+</div>
+
+<div class="spotlight" id="spotlight"></div>
+<div class="interference" id="interference"></div>
+<div class="snow"></div>
+<div class="vhs-track"></div>
+
+<div class="overlay">
+  <div class="card">
+    <div class="logo">Pi <span class="tv">TV</span></div>
+    <div class="divider"></div>
+    <div class="message">Please Stand By</div>
+    <div class="sub">Programming will resume shortly</div>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+const channels = [
+  {n:1,name:"Crime & Justice"},{n:2,name:"Prestige Drama"},{n:3,name:"Comedy Central"},
+  {n:4,name:"Sci-Fi & Fantasy"},{n:5,name:"Thriller & Mystery"},{n:6,name:"Binge TV"},
+  {n:7,name:"Action Packed"},{n:8,name:"Romance & Family"},{n:9,name:"9-1-1 24/7"},
+  {n:10,name:"Reality & Variety"},{n:11,name:"Movies"},{n:12,name:"Blue Bloods 24/7"},
+  {n:13,name:"Downton Abbey 24/7"},{n:14,name:"Animated"},{n:15,name:"British Telly"},
+  {n:16,name:"Workplace"},{n:17,name:"Superheroes"},{n:18,name:"Horror & Dark"},
+  {n:19,name:"Legal Eagles"},{n:20,name:"Comfort TV"}
+];
+
+// Grid badges
+const grid = document.getElementById('grid');
+channels.forEach(ch => {
+  const d = document.createElement('div');
+  d.className = 'badge';
+  d.innerHTML = `<span class="num">${ch.n}</span>${ch.name}`;
+  grid.appendChild(d);
+});
+
+// Randomly light up badges
+function lightBadges() {
+  const badges = document.querySelectorAll('.badge');
+  badges.forEach(b => b.classList.remove('lit'));
+  const count = 3 + Math.floor(Math.random() * 5);
+  const indices = new Set();
+  while (indices.size < count) indices.add(Math.floor(Math.random() * 20));
+  indices.forEach(i => badges[i].classList.add('lit'));
+}
+lightBadges();
+setInterval(lightBadges, 2000);
+
+// Interference lines
+const intEl = document.getElementById('interference');
+function spawnInterference() {
+  const line = document.createElement('div');
+  line.className = 'int-line';
+  const h = 1 + Math.random() * 4;
+  line.style.cssText = `height:${h}px;animation-duration:${4+Math.random()*6}s;`;
+  intEl.appendChild(line);
+  setTimeout(() => line.remove(), 12000);
+}
+setInterval(spawnInterference, 800);
+
+// Roving spotlight
+const spot = document.getElementById('spotlight');
+let sx = 50, sy = 50, tx = 50, ty = 50;
+function newTarget() { tx = 20+Math.random()*60; ty = 15+Math.random()*40; }
+newTarget();
+setInterval(newTarget, 3000);
+function moveSpot() {
+  sx += (tx - sx) * 0.02;
+  sy += (ty - sy) * 0.02;
+  spot.style.setProperty('--sx', sx+'%');
+  spot.style.setProperty('--sy', sy+'%');
+  requestAnimationFrame(moveSpot);
+}
+moveSpot();
+</script>
+</body>
+</html>

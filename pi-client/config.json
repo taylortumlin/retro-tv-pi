@@ -1,0 +1,78 @@
+{
+  "ersatztv_url": "http://192.168.1.72:8409",
+  "web_port": 5000,
+  "default_channel": 1,
+  "default_theme": "default",
+  "channels": [
+    {"number": 1, "name": "Crime & Justice"},
+    {"number": 2, "name": "Prestige Drama"},
+    {"number": 3, "name": "Comedy Central"},
+    {"number": 4, "name": "Sci-Fi & Fantasy"},
+    {"number": 5, "name": "Thriller & Mystery"},
+    {"number": 6, "name": "Binge TV"},
+    {"number": 7, "name": "Action Packed"},
+    {"number": 8, "name": "Romance & Family"},
+    {"number": 9, "name": "9-1-1 24/7"},
+    {"number": 10, "name": "Reality & Variety"},
+    {"number": 11, "name": "Movies"},
+    {"number": 12, "name": "Blue Bloods 24/7"},
+    {"number": 13, "name": "Downton Abbey 24/7"},
+    {"number": 14, "name": "Animated"},
+    {"number": 15, "name": "British Telly"},
+    {"number": 16, "name": "Workplace"},
+    {"number": 17, "name": "Superheroes"},
+    {"number": 18, "name": "Horror & Dark"},
+    {"number": 19, "name": "Legal Eagles"},
+    {"number": 20, "name": "Comfort TV"}
+  ],
+  "mpv_socket": "/tmp/mpvsocket",
+  "guide_port": 5001,
+  "player_url": "http://localhost:5000",
+  "mpv_options": {
+    "vo": "drm",
+    "hwdec": "v4l2m2m-copy",
+    "fullscreen": true,
+    "cache": "yes",
+    "cache-secs": 10
+  },
+  "ticker": {
+    "weather": {
+      "latitude": 33.749,
+      "longitude": -84.388,
+      "temperature_unit": "fahrenheit",
+      "location_name": "Atlanta"
+    },
+    "messages": [
+      "Welcome to Pi TV Guide",
+      "Press G for Guide, P for Prevue, U for Up Next, T for Tonight",
+      "Use arrow keys to browse the schedule"
+    ],
+    "speed": 60,
+    "show_now_playing": true,
+    "news": {
+      "show_headlines": true,
+      "max_headlines": 10,
+      "feeds": [
+        {"name": "AP News", "url": "https://apnews.com/world-news.rss"},
+        {"name": "BBC", "url": "https://feeds.bbci.co.uk/news/rss.xml"},
+        {"name": "NPR", "url": "https://feeds.npr.org/1001/rss.xml"}
+      ]
+    },
+    "forecast_days": 7,
+    "weatherstar_music_url": "",
+    "weatherstar_playlist": [
+      {"title": "Fair Weather", "url": "https://archive.org/download/weatherscancompletecollection/01%20Fair%20Weather.mp3"},
+      {"title": "Lazy Days", "url": "https://archive.org/download/weatherscancompletecollection/01%20Lazy%20Days.mp3"},
+      {"title": "Beach Frolic", "url": "https://archive.org/download/weatherscancompletecollection/02%20Beach%20Frolic.mp3"},
+      {"title": "Easy Times", "url": "https://archive.org/download/weatherscancompletecollection/05%20Easy%20Times.mp3"},
+      {"title": "Midnight Cruise", "url": "https://archive.org/download/weatherscancompletecollection/05%20Midnight%20Cruise.mp3"},
+      {"title": "Tropical Breeze", "url": "https://archive.org/download/weatherscancompletecollection/06%20Tropical%20Breeze.mp3"},
+      {"title": "Smooth Sailing", "url": "https://archive.org/download/weatherscancompletecollection/07%20Smooth%20Sailing.mp3"},
+      {"title": "A New Day", "url": "https://archive.org/download/weatherscancompletecollection/08%20A%20New%20Day.mp3"},
+      {"title": "Jamaican Jam", "url": "https://archive.org/download/weatherscancompletecollection/11%20Jamaican%20Jam.mp3"},
+      {"title": "Late Nite Cafe", "url": "https://archive.org/download/weatherscancompletecollection/11%20Late%20Nite%20Cafe.mp3"},
+      {"title": "Good Times", "url": "https://archive.org/download/weatherscancompletecollection/12%20Good%20Times.mp3"},
+      {"title": "A Little Jazz", "url": "https://archive.org/download/weatherscancompletecollection/13%20A%20Little%20Jazz.mp3"}
+    ]
+  }
+}

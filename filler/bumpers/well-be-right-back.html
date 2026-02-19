@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pi TV - We'll Be Right Back</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#000}
+body{font-family:'Courier New',monospace}
+
+/* Animated gradient background */
+.bg{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:linear-gradient(135deg,#0a0a2e,#1a0030,#001040,#0a0a2e);
+  background-size:400% 400%;
+  animation:gradShift 20s ease infinite;
+}
+
+/* Floating bokeh particles */
+.particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden}
+.particle{
+  position:absolute;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,200,0,.3),transparent 70%);
+  animation:float linear infinite;
+}
+
+/* Horizontal sweep lines */
+.sweep{
+  position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;
+}
+.sweep-line{
+  position:absolute;left:0;width:100%;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(59,158,255,.15),transparent);
+  animation:sweepDown linear infinite;
+}
+
+/* CRT scanlines */
+.crt::before{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:repeating-linear-gradient(to bottom,transparent 0px,transparent 1px,rgba(0,0,0,.12) 1px,rgba(0,0,0,.12) 3px);
+  pointer-events:none;z-index:1000;
+}
+.crt::after{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.5) 100%);
+  pointer-events:none;z-index:1001;
+}
+
+/* Main content */
+.center{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:10;
+}
+
+.logo{
+  font-size:80px;font-weight:bold;letter-spacing:8px;
+  color:#ffc800;
+  text-shadow:0 0 40px rgba(255,200,0,.5),0 0 80px rgba(255,200,0,.2);
+  animation:logoGlow 3s ease-in-out infinite alternate;
+}
+.logo .tv{color:#3b9eff;text-shadow:0 0 40px rgba(59,158,255,.5),0 0 80px rgba(59,158,255,.2)}
+
+.divider{
+  width:0;height:3px;margin:25px auto 35px;
+  background:linear-gradient(90deg,transparent,#ffc800,transparent);
+  animation:expandLine 2s ease-out forwards;
+}
+
+.message{
+  font-size:56px;font-weight:bold;color:#ececec;
+  letter-spacing:5px;text-transform:uppercase;
+  text-shadow:0 0 20px rgba(236,236,236,.3);
+  animation:glitchText 8s ease-in-out infinite;
+  position:relative;
+}
+/* VHS glitch copies */
+.message::before,.message::after{
+  content:'WE\'LL BE RIGHT BACK';position:absolute;top:0;left:0;width:100%;height:100%;
+  overflow:hidden;
+}
+.message::before{
+  color:#ff0040;z-index:-1;
+  animation:glitchLeft 4s ease-in-out infinite;
+}
+.message::after{
+  color:#00d4ff;z-index:-1;
+  animation:glitchRight 4s ease-in-out infinite;
+}
+
+/* Floating channel names */
+.float-channels{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:5;overflow:hidden;
+}
+.float-ch{
+  position:absolute;
+  font-size:16px;letter-spacing:2px;
+  color:rgba(96,144,204,.12);
+  white-space:nowrap;
+  animation:drift linear infinite;
+}
+
+/* Bottom ticker */
+.ticker-wrap{
+  position:fixed;bottom:50px;left:0;width:100%;height:50px;
+  z-index:10;overflow:hidden;
+}
+.ticker-track{
+  display:flex;gap:40px;white-space:nowrap;
+  animation:tickerScroll 35s linear infinite;
+}
+.ticker-item{
+  display:flex;align-items:center;gap:10px;
+  font-size:18px;color:#506888;letter-spacing:1px;
+}
+.ticker-item .num{color:#ffc800;font-weight:bold;font-size:20px}
+.ticker-item .dot{width:4px;height:4px;border-radius:50%;background:#3060d0}
+
+/* VHS tracking bar */
+.vhs-bar{
+  position:fixed;left:0;width:100%;height:8px;z-index:900;
+  background:rgba(255,255,255,.08);
+  animation:vhsTrack 12s linear infinite;
+}
+
+@keyframes gradShift{
+  0%{background-position:0% 50%}25%{background-position:100% 50%}
+  50%{background-position:100% 100%}75%{background-position:0% 100%}100%{background-position:0% 50%}
+}
+@keyframes float{
+  0%{transform:translateY(110vh) scale(0);opacity:0}
+  10%{opacity:1}90%{opacity:1}
+  100%{transform:translateY(-10vh) scale(1);opacity:0}
+}
+@keyframes sweepDown{
+  0%{top:-2px;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:1080px;opacity:0}
+}
+@keyframes logoGlow{
+  0%{text-shadow:0 0 40px rgba(255,200,0,.5),0 0 80px rgba(255,200,0,.2)}
+  100%{text-shadow:0 0 60px rgba(255,200,0,.7),0 0 120px rgba(255,200,0,.3),0 0 200px rgba(255,200,0,.1)}
+}
+@keyframes expandLine{0%{width:0}100%{width:700px}}
+@keyframes glitchText{
+  0%,90%,100%{transform:none}
+  92%{transform:translate(-3px,1px) skewX(-1deg)}
+  94%{transform:translate(3px,-1px) skewX(1deg)}
+  96%{transform:translate(-2px,0)}
+  98%{transform:translate(2px,1px)}
+}
+@keyframes glitchLeft{
+  0%,87%,100%{clip-path:inset(0 0 0 0);transform:none}
+  89%{clip-path:inset(20% 0 60% 0);transform:translateX(-4px)}
+  91%{clip-path:inset(50% 0 20% 0);transform:translateX(3px)}
+  93%{clip-path:inset(10% 0 70% 0);transform:translateX(-2px)}
+  95%{clip-path:inset(0 0 0 0);transform:none}
+}
+@keyframes glitchRight{
+  0%,87%,100%{clip-path:inset(0 0 0 0);transform:none}
+  90%{clip-path:inset(60% 0 10% 0);transform:translateX(4px)}
+  92%{clip-path:inset(30% 0 40% 0);transform:translateX(-3px)}
+  94%{clip-path:inset(70% 0 5% 0);transform:translateX(2px)}
+  96%{clip-path:inset(0 0 0 0);transform:none}
+}
+@keyframes drift{
+  0%{transform:translateX(-200px)}
+  100%{transform:translateX(2100px)}
+}
+@keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes vhsTrack{
+  0%{top:-8px}100%{top:1088px}
+}
+</style>
+</head>
+<body class="crt">
+<div class="bg"></div>
+
+<!-- Floating bokeh particles (generated by JS) -->
+<div class="particles" id="particles"></div>
+
+<!-- Sweep lines -->
+<div class="sweep" id="sweep"></div>
+
+<!-- Floating channel names in background -->
+<div class="float-channels" id="floaters"></div>
+
+<!-- VHS tracking bar -->
+<div class="vhs-bar"></div>
+
+<!-- Center content -->
+<div class="center">
+  <div class="logo">Pi <span class="tv">TV</span></div>
+  <div class="divider"></div>
+  <div class="message">We'll Be Right Back</div>
+</div>
+
+<!-- Bottom channel ticker -->
+<div class="ticker-wrap">
+  <div class="ticker-track" id="ticker"></div>
+</div>
+
+<script>
+const channels = [
+  "Crime & Justice","Prestige Drama","Comedy Central","Sci-Fi & Fantasy",
+  "Thriller & Mystery","Binge TV","Action Packed","Romance & Family",
+  "9-1-1 24/7","Reality & Variety","Movies","Blue Bloods 24/7",
+  "Downton Abbey 24/7","Animated","British Telly","Workplace",
+  "Superheroes","Horror & Dark","Legal Eagles","Comfort TV"
+];
+
+// Particles
+const particlesEl = document.getElementById('particles');
+for (let i = 0; i < 25; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const size = 30 + Math.random() * 120;
+  p.style.cssText = `
+    width:${size}px;height:${size}px;
+    left:${Math.random()*100}%;
+    animation-duration:${8+Math.random()*15}s;
+    animation-delay:${Math.random()*10}s;
+  `;
+  particlesEl.appendChild(p);
+}
+
+// Sweep lines
+const sweepEl = document.getElementById('sweep');
+for (let i = 0; i < 4; i++) {
+  const s = document.createElement('div');
+  s.className = 'sweep-line';
+  s.style.cssText = `animation-duration:${6+Math.random()*8}s;animation-delay:${i*2.5}s;`;
+  sweepEl.appendChild(s);
+}
+
+// Floating channel names
+const floaters = document.getElementById('floaters');
+function spawnFloater() {
+  const el = document.createElement('div');
+  el.className = 'float-ch';
+  el.textContent = channels[Math.floor(Math.random()*channels.length)];
+  el.style.cssText = `
+    top:${Math.random()*90}%;
+    font-size:${14+Math.random()*20}px;
+    animation-duration:${18+Math.random()*25}s;
+    opacity:0;
+    animation-fill-mode:forwards;
+  `;
+  floaters.appendChild(el);
+  setTimeout(() => el.remove(), 45000);
+}
+for (let i = 0; i < 8; i++) setTimeout(() => spawnFloater(), i * 2000);
+setInterval(spawnFloater, 3000);
+
+// Ticker
+const ticker = document.getElementById('ticker');
+const items = [...channels, ...channels].map((ch, i) =>
+  `<span class="ticker-item"><span class="dot"></span><span class="num">${(i%20)+1}</span>${ch}</span>`
+).join('');
+ticker.innerHTML = items;
+</script>
+</body>
+</html>

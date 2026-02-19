@@ -1,0 +1,9 @@
+.DS_Store
+._*
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.png
+*.mp4
+pi-client/.claude/

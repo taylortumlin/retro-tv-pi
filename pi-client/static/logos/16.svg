@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" rx="24" fill="#2a1a0a"/>
+  <!-- Coffee mug -->
+  <g fill="#ffe0a0">
+    <!-- Mug body -->
+    <rect x="45" y="75" width="95" height="80" rx="10"/>
+    <!-- Handle -->
+    <path d="M140,90 Q175,90 175,118 Q175,145 140,145" fill="none" stroke="#ffe0a0" stroke-width="12" stroke-linecap="round"/>
+    <!-- Steam wisps -->
+    <path d="M72,65 Q77,45 72,30" fill="none" stroke="#ffe0a0" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+    <path d="M95,60 Q100,40 95,22" fill="none" stroke="#ffe0a0" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+    <path d="M118,65 Q123,45 118,30" fill="none" stroke="#ffe0a0" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+  </g>
+</svg>

@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  ersatztv:
+    image: jasongdove/ersatztv:latest
+    container_name: ersatztv
+    ports:
+      - "8409:8409"
+    volumes:
+      # ErsatzTV config/database
+      - ./config:/root/.local/share/ersatztv
+      # Optional: Mount local media if not using Jellyfin exclusively
+      # - /path/to/media:/media:ro
+    environment:
+      - TZ=America/New_York  # Change to your timezone
+    restart: unless-stopped
+    # Uncomment for hardware transcoding (Intel)
+    # devices:
+    #   - /dev/dri:/dev/dri
