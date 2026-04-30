@@ -1,12 +1,13 @@
-export type ThemeName = 'modern' | 'prevue' | 'comcast';
+export type ThemeName = 'modern' | 'prevue' | 'comcast' | 'crt';
 
 export const THEME_LABELS: Record<ThemeName, string> = {
   modern: 'Modern Dark',
   prevue: 'Prevue Classic',
   comcast: 'Comcast Blue',
+  crt: 'CRT Retro',
 };
 
-const THEMES: ThemeName[] = ['modern', 'prevue', 'comcast'];
+const THEMES: ThemeName[] = ['modern', 'prevue', 'comcast', 'crt'];
 const STORAGE_KEY = 'pi-tv-theme';
 
 let active = $state<ThemeName>('modern');

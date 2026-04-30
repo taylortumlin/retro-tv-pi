@@ -24,6 +24,13 @@
       <AdminView />
     {:else if uiStore.activeView === 'search'}
       <SearchView />
+    {:else}
+      <div style="padding: var(--sp-10); text-align: center; color: var(--color-text-muted)">
+        <h2 style="font-size: var(--text-2xl); color: var(--color-text); margin-bottom: var(--sp-3)">
+          {uiStore.activeView.charAt(0).toUpperCase() + uiStore.activeView.slice(1)} mode
+        </h2>
+        <p>Coming soon.</p>
+      </div>
     {/if}
 
     {#if uiStore.modalProgramme}

@@ -1,6 +1,16 @@
 import type { Programme } from '../types/epg';
 
-export type ViewName = 'guide' | 'discover' | 'player' | 'weather' | 'admin' | 'search';
+export type ViewName =
+  | 'guide'
+  | 'discover'
+  | 'player'
+  | 'weather'
+  | 'admin'
+  | 'search'
+  | 'upnext'
+  | 'tonight'
+  | 'quad'
+  | 'prevue';
 
 let activeView = $state<ViewName>('guide');
 let searchQuery = $state('');
@@ -47,13 +57,12 @@ export function getUiStore() {
 
     initFromUrl() {
       const path = window.location.pathname;
-      if (path === '/' || path === '') activeView = 'guide';
-      else if (path === '/discover') activeView = 'discover';
-      else if (path === '/player') activeView = 'player';
-      else if (path === '/weather') activeView = 'weather';
-      else if (path === '/admin') activeView = 'admin';
-      else if (path === '/search') activeView = 'search';
-      else activeView = 'guide';
+      const slug = path.replace(/^\//, '') || 'guide';
+      const known: ViewName[] = [
+        'guide', 'discover', 'player', 'weather', 'admin', 'search',
+        'upnext', 'tonight', 'quad', 'prevue',
+      ];
+      activeView = (known.includes(slug as ViewName) ? slug : 'guide') as ViewName;
     },
   };
 }

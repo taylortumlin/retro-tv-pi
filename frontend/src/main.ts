@@ -27,6 +27,25 @@ registerShortcut('T', (e) => {
   uiStore.toast(`Theme: ${themeStore.label(themeStore.active)}`, 'info');
 });
 
+// View-toggle shortcuts (single lowercase keys, no modifiers).
+// The underlying initKeyboard() guard already skips inputs/textareas/selects.
+const viewKeys: Record<string, 'guide' | 'upnext' | 'tonight' | 'quad' | 'prevue' | 'weather' | 'discover'> = {
+  g: 'guide',
+  u: 'upnext',
+  t: 'tonight',
+  q: 'quad',
+  p: 'prevue',
+  w: 'weather',
+  d: 'discover',
+};
+for (const [key, view] of Object.entries(viewKeys)) {
+  registerShortcut(key, (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+    e.preventDefault();
+    uiStore.navigate(view);
+  });
+}
+
 const app = mount(App, {
   target: document.getElementById('app')!,
 });
