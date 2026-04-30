@@ -24,9 +24,9 @@
         >
           <div class="card-header">
             {#if np.channel.logo}
-              <img class="channel-logo" src={np.channel.logo} alt="" width="28" height="28" />
+              <img class="channel-logo" src={np.channel.logo} alt="" width="32" height="32" />
             {:else}
-              <span class="channel-num tabular-nums">{np.channel.number}</span>
+              <span class="channel-num tabular-nums font-mono">{np.channel.number}</span>
             {/if}
             <LiveIndicator size={6} />
           </div>
@@ -82,6 +82,7 @@
     background: var(--color-bg-hover);
     border-color: var(--color-accent);
     transform: translateY(-2px);
+    box-shadow: var(--glass-glow);
   }
 
   .card-header {

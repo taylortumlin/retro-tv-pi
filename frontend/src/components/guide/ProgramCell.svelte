@@ -58,6 +58,7 @@
   .program-cell:hover {
     background: var(--color-bg-hover);
     border-color: var(--color-accent);
+    box-shadow: var(--glass-glow);
     z-index: 2;
   }
 

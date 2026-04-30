@@ -12,10 +12,14 @@
 
 <div class="channel-badge" class:compact>
   {#if channel.logo}
-    <img src={channel.logo} alt="" class="logo" />
+    <div class="logo-wrap">
+      <img src={channel.logo} alt="" class="logo" />
+    </div>
+  {:else}
+    <div class="logo-fallback font-mono">{channel.name?.charAt(0) || '?'}</div>
   {/if}
   <div class="info">
-    <span class="number tabular-nums">{channel.number}</span>
+    <span class="number tabular-nums font-mono">{channel.number}</span>
     {#if !compact}
       <span class="name">{channel.name}</span>
     {/if}
@@ -48,11 +52,37 @@
     padding: var(--sp-1);
   }
 
+  .logo-wrap {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+    flex-shrink: 0;
+  }
+
   .logo {
-    width: 28px;
-    height: 28px;
+    width: 100%;
+    height: 100%;
     border-radius: var(--radius-sm);
     object-fit: contain;
+  }
+
+  .logo-fallback {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-accent-subtle);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-accent);
+    flex-shrink: 0;
   }
 
   .info {

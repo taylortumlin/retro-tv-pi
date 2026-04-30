@@ -8,6 +8,7 @@
   import ProgressBar from '../shared/ProgressBar.svelte';
   import Badge from '../shared/Badge.svelte';
   import LiveIndicator from '../shared/LiveIndicator.svelte';
+  import Icon from '../shared/Icon.svelte';
   import { focusTrap } from '../../lib/actions/focusTrap';
   import { fly, fade } from 'svelte/transition';
 
@@ -76,12 +77,15 @@
   >
     <!-- Hero -->
     <div class="modal-hero">
-      {#if prog.poster || prog.thumbnail}
-        <img src={prog.poster || prog.thumbnail} alt="" class="modal-poster" />
+      {#if prog.thumbnail || prog.poster}
+        <img src={prog.thumbnail || prog.poster} alt="" class="hero-backdrop" />
       {/if}
       <div class="modal-hero-gradient"></div>
+      {#if prog.poster && prog.poster !== prog.thumbnail}
+        <img src={prog.poster} alt="" class="modal-poster-inset" />
+      {/if}
       <button class="close-btn" onclick={onClose} aria-label="Close">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        <Icon name="close" size={24} />
       </button>
     </div>
 
@@ -121,12 +125,12 @@
       <div class="modal-actions">
         {#if live}
           <button class="action-primary" onclick={watchNow}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <Icon name="play" size={18} />
             Watch Now
           </button>
         {/if}
         <button class="action-secondary" onclick={tuneTv}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+          <Icon name="tv" size={18} />
           Tune TV
         </button>
         {#if !live}
@@ -135,7 +139,7 @@
             class:active={hasReminder}
             onclick={toggleReminder}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill={hasReminder ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <Icon name={hasReminder ? 'bell-filled' : 'bell'} size={18} fill={hasReminder ? 'currentColor' : 'none'} />
             {hasReminder ? 'Reminder Set' : 'Set Reminder'}
           </button>
         {/if}
@@ -179,16 +183,29 @@
 
   .modal-hero {
     position: relative;
-    height: 200px;
+    height: 240px;
     background: var(--color-bg-card);
     overflow: hidden;
   }
 
-  .modal-poster {
+  .hero-backdrop {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0.6;
+    object-position: center 20%;
+    opacity: 0.4;
+  }
+
+  .modal-poster-inset {
+    position: absolute;
+    bottom: var(--sp-4);
+    left: var(--sp-4);
+    height: 140px;
+    width: auto;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    object-fit: cover;
+    z-index: 1;
   }
 
   .modal-hero-gradient {

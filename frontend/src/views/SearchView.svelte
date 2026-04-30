@@ -3,6 +3,7 @@
   import { uiStore } from '../lib/stores/ui';
   import { fuzzySearch } from '../lib/utils/search';
   import BrowseCard from '../components/discovery/BrowseCard.svelte';
+  import Icon from '../components/shared/Icon.svelte';
 
   let inputEl: HTMLInputElement;
   let query = $state('');
@@ -18,9 +19,7 @@
 <div class="search-view">
   <div class="search-header">
     <div class="search-input-wrap">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-      </svg>
+      <Icon name="search" size={20} />
       <input
         bind:this={inputEl}
         bind:value={query}
@@ -30,9 +29,7 @@
       />
       {#if query}
         <button class="clear-btn" onclick={() => { query = ''; inputEl?.focus(); }} aria-label="Clear search">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6L6 18M6 6l12 12"/>
-          </svg>
+          <Icon name="close" size={18} />
         </button>
       {/if}
     </div>
@@ -118,7 +115,7 @@
 
   .results-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: var(--sp-4);
   }
 

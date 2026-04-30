@@ -3,6 +3,7 @@
   import type { TickerConfig, NewsFeed } from '../../lib/types/admin';
   import { uiStore } from '../../lib/stores/ui';
   import Spinner from '../shared/Spinner.svelte';
+  import Icon from '../shared/Icon.svelte';
 
   let ticker = $state<TickerConfig | null>(null);
   let loading = $state(true);
@@ -138,7 +139,7 @@
           <div class="message-row">
             <input type="text" bind:value={ticker.messages[i]} placeholder="Message text..." />
             <button class="remove-btn" onclick={() => removeMessage(i)} aria-label="Remove message">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              <Icon name="close" size={16} />
             </button>
           </div>
         {/each}
@@ -164,7 +165,7 @@
             <input type="url" bind:value={feed.url} placeholder="RSS URL" class="feed-url" />
             <button class="btn-small" onclick={() => handleTestFeed(feed.url)}>Test</button>
             <button class="remove-btn" onclick={() => removeFeed(i)} aria-label="Remove feed">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              <Icon name="close" size={16} />
             </button>
           </div>
         {/each}

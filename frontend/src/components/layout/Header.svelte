@@ -1,6 +1,7 @@
 <script lang="ts">
   import { uiStore, type ViewName } from '../../lib/stores/ui';
   import { clockTime } from '../../lib/utils/time';
+  import Icon from '../shared/Icon.svelte';
 
   let time = $state(clockTime());
 
@@ -37,12 +38,10 @@
   </nav>
 
   <button class="search-btn" onclick={() => uiStore.navigate('search')} aria-label="Search programmes">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-    </svg>
+    <Icon name="search" size={18} />
   </button>
 
-  <time class="clock tabular-nums" aria-live="polite" aria-label="Current time">{time}</time>
+  <time class="clock tabular-nums font-mono" aria-live="polite" aria-label="Current time">{time}</time>
 </header>
 
 <style>

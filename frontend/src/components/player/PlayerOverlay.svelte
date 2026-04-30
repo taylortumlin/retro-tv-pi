@@ -4,6 +4,7 @@
   import { getProgress, formatTime } from '../../lib/utils/time';
   import ProgressBar from '../shared/ProgressBar.svelte';
   import LiveIndicator from '../shared/LiveIndicator.svelte';
+  import Icon from '../shared/Icon.svelte';
   import { fade } from 'svelte/transition';
 
   interface Props {
@@ -22,7 +23,7 @@
   <div class="overlay-top glass">
     {#if ch}
       <div class="channel-info">
-        <span class="ch-num tabular-nums">{ch.number}</span>
+        <span class="ch-num tabular-nums font-mono">{ch.number}</span>
         <span class="ch-name">{ch.name}</span>
         <LiveIndicator />
       </div>
@@ -45,25 +46,17 @@
     {/if}
     <div class="controls">
       <button onclick={() => playerStore.togglePause()} aria-label={playerStore.paused ? 'Play' : 'Pause'}>
-        {#if playerStore.paused}
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        {:else}
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-        {/if}
+        <Icon name={playerStore.paused ? 'play' : 'pause'} size={24} />
       </button>
 
       <button onclick={() => playerStore.toggleMute()} aria-label={playerStore.muted ? 'Unmute' : 'Mute'}>
-        {#if playerStore.muted}
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-        {:else}
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>
-        {/if}
+        <Icon name={playerStore.muted ? 'mute' : 'unmute'} size={22} />
       </button>
 
       <div class="spacer"></div>
 
       <button onclick={onToggleMiniGuide} aria-label="Toggle mini guide">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <Icon name="menu" size={22} />
       </button>
     </div>
   </div>

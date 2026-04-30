@@ -3,17 +3,20 @@
 
   interface Props {
     headlines: NewsHeadline[];
+    speed?: number;
   }
 
-  let { headlines }: Props = $props();
+  let { headlines, speed = 16 }: Props = $props();
 
   let text = $derived(
     headlines.map(h => `${h.source}: ${h.title}`).join('   ·   ')
   );
+
+  let duration = $derived(Math.max(30, text.length / speed));
 </script>
 
 <div class="news-ticker" aria-label="News ticker" role="marquee">
-  <div class="ticker-track">
+  <div class="ticker-track" style:animation-duration="{duration}s">
     <span class="ticker-text">{text}   ·   {text}</span>
   </div>
 </div>
@@ -42,7 +45,7 @@
   .ticker-track {
     display: flex;
     white-space: nowrap;
-    animation: scroll 60s linear infinite;
+    animation: scroll linear infinite;
   }
 
   .ticker-text {

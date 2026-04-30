@@ -4,6 +4,7 @@
   import { formatTime, isLive, getProgress } from '../../lib/utils/time';
   import ProgressBar from '../shared/ProgressBar.svelte';
   import LiveIndicator from '../shared/LiveIndicator.svelte';
+  import Icon from '../shared/Icon.svelte';
   import { fly } from 'svelte/transition';
 
   interface Props {
@@ -18,7 +19,7 @@
   <div class="mg-header">
     <h3>Channels</h3>
     <button onclick={onClose} aria-label="Close mini guide">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      <Icon name="close" size={20} />
     </button>
   </div>
   <div class="mg-list">
@@ -30,7 +31,7 @@
         class:active
         onclick={() => { playerStore.setChannel(ch); onClose(); }}
       >
-        <span class="mg-num tabular-nums">{ch.number}</span>
+        <span class="mg-num tabular-nums font-mono">{ch.number}</span>
         <div class="mg-info">
           <span class="mg-name">{ch.name}</span>
           {#if prog}

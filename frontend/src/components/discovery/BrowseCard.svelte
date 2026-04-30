@@ -56,12 +56,12 @@
   .browse-card:hover {
     transform: translateY(-4px);
     border-color: var(--color-accent);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--glass-glow);
   }
 
   .card-poster {
     position: relative;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 2 / 3;
     background: var(--color-bg);
     overflow: hidden;
   }

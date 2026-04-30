@@ -1,5 +1,6 @@
 <script lang="ts">
   import { uiStore } from '../../lib/stores/ui';
+  import Icon from '../shared/Icon.svelte';
 
   interface Props {
     onFocus?: () => void;
@@ -10,9 +11,7 @@
 </script>
 
 <div class="search-bar">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-  </svg>
+  <Icon name="search" size={16} />
   <input
     type="search"
     placeholder="Search..."
@@ -22,7 +21,7 @@
   />
   {#if uiStore.searchQuery}
     <button onclick={() => { uiStore.setSearch(''); onClear?.(); }} aria-label="Clear">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      <Icon name="close" size={16} />
     </button>
   {/if}
 </div>

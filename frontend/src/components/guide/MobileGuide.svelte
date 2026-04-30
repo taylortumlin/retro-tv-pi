@@ -31,7 +31,7 @@
     {@const upcoming = epgStore.getUpcoming(channel.id, 4)}
     <div class="channel-group">
       <div class="channel-header">
-        <span class="ch-num tabular-nums">{channel.number}</span>
+        <span class="ch-num tabular-nums font-mono">{channel.number}</span>
         <span class="ch-name">{channel.name}</span>
         <FavoriteStar channelId={channel.id} size={16} />
       </div>

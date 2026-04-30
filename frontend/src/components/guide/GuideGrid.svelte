@@ -3,6 +3,7 @@
   import { favoritesStore } from '../../lib/stores/favorites';
   import TimeRuler from './TimeRuler.svelte';
   import GuideRow from './GuideRow.svelte';
+  import Icon from '../shared/Icon.svelte';
   import type { Channel } from '../../lib/types/epg';
 
   interface Props {
@@ -54,11 +55,11 @@
 
 <section class="guide-grid-section" aria-label="TV Guide Grid">
   <div class="grid-controls">
-    <button onclick={() => shift(-1)} aria-label="Go back 1 hour">&larr;</button>
+    <button onclick={() => shift(-1)} aria-label="Go back 1 hour"><Icon name="chevron-left" size={16} /></button>
     <span class="grid-time-label">
       {gridStartDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
     </span>
-    <button onclick={() => shift(1)} aria-label="Go forward 1 hour">&rarr;</button>
+    <button onclick={() => shift(1)} aria-label="Go forward 1 hour"><Icon name="chevron-right" size={16} /></button>
     {#if shiftHours !== 0}
       <button class="reset-btn" onclick={() => { shiftHours = 0; }}>Now</button>
     {/if}

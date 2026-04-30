@@ -19,7 +19,7 @@
         onclick={() => playerStore.setChannel(ch)}
         aria-label="Switch to channel {ch.number} {ch.name}"
       >
-        <span class="tabular-nums">{ch.number}</span>
+        <span class="tabular-nums font-mono">{ch.number}</span>
       </button>
     {/each}
   </div>

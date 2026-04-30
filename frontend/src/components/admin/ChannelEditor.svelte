@@ -3,6 +3,7 @@
   import type { ConfigChannel, DiscoveredChannel } from '../../lib/types/admin';
   import { uiStore } from '../../lib/stores/ui';
   import Spinner from '../shared/Spinner.svelte';
+  import Icon from '../shared/Icon.svelte';
 
   let channels = $state<ConfigChannel[]>([]);
   let loading = $state(true);
@@ -105,8 +106,8 @@
       {#each channels as ch, i}
         <div class="channel-row">
           <div class="reorder-btns">
-            <button onclick={() => moveUp(i)} disabled={i === 0} aria-label="Move up">&uarr;</button>
-            <button onclick={() => moveDown(i)} disabled={i === channels.length - 1} aria-label="Move down">&darr;</button>
+            <button onclick={() => moveUp(i)} disabled={i === 0} aria-label="Move up"><Icon name="chevron-up" size={14} /></button>
+            <button onclick={() => moveDown(i)} disabled={i === channels.length - 1} aria-label="Move down"><Icon name="chevron-down" size={14} /></button>
           </div>
           <input
             type="number"
@@ -121,7 +122,7 @@
             aria-label="Channel name"
           />
           <button class="remove-btn" onclick={() => removeChannel(i)} aria-label="Remove channel">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <Icon name="close" size={16} />
           </button>
         </div>
       {/each}
