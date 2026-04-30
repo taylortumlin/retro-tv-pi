@@ -4,6 +4,7 @@
   import { epgStore } from '../../lib/stores/epg';
   import { playerStore } from '../../lib/stores/player';
   import { remindersStore } from '../../lib/stores/reminders';
+  import { notificationsStore } from '../../lib/stores/notifications.svelte';
   import { tuneChannel } from '../../lib/api/player';
   import { getProgress, formatTime, formatDuration, isLive, formatDate } from '../../lib/utils/time';
   import ProgressBar from '../shared/ProgressBar.svelte';
@@ -46,16 +47,35 @@
     }
   }
 
-  function toggleReminder() {
+  async function toggleReminder() {
     if (hasReminder) {
       remindersStore.remove(prog.channel_id, prog.start_ts);
       uiStore.toast('Reminder removed', 'info');
+      return;
+    }
+
+    remindersStore.add({
+      programmeTitle: prog.title,
+      channelId: prog.channel_id,
+      startTs: prog.start_ts,
+    });
+
+    // Ask for notification permission the first time the user adds a
+    // reminder, while we're inside a user gesture (required by Safari).
+    if (notificationsStore.supported && notificationsStore.permission === 'default') {
+      const result = await notificationsStore.request();
+      if (result === 'granted') {
+        uiStore.toast('Reminder set · notifications on', 'success');
+        return;
+      }
+      if (result === 'denied') {
+        uiStore.toast('Reminder set · enable notifications in browser settings', 'warning');
+        return;
+      }
+    }
+    if (notificationsStore.permission === 'denied') {
+      uiStore.toast('Reminder set · notifications blocked', 'warning');
     } else {
-      remindersStore.add({
-        programmeTitle: prog.title,
-        channelId: prog.channel_id,
-        startTs: prog.start_ts,
-      });
       uiStore.toast('Reminder set', 'success');
     }
   }

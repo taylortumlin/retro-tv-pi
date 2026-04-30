@@ -3,6 +3,7 @@
   import type { SystemStatus } from '../../lib/types/admin';
   import Spinner from '../shared/Spinner.svelte';
   import { themeStore } from '../../lib/stores/theme.svelte';
+  import { notificationsStore } from '../../lib/stores/notifications.svelte';
 
   let status = $state<SystemStatus | null>(null);
   let loading = $state(true);
@@ -41,6 +42,33 @@
       {/each}
     </div>
     <p class="theme-hint">Press <kbd>Shift</kbd> + <kbd>T</kbd> to cycle themes.</p>
+  </section>
+
+  <section class="notif-card">
+    <h3>Reminders</h3>
+    <div class="notif-row">
+      <div class="notif-status">
+        <span class="notif-label">Browser notifications</span>
+        <span class="notif-value notif-{notificationsStore.permission}">
+          {#if notificationsStore.permission === 'granted'}Enabled
+          {:else if notificationsStore.permission === 'denied'}Blocked
+          {:else if notificationsStore.permission === 'unsupported'}Unsupported
+          {:else}Not asked{/if}
+        </span>
+      </div>
+      {#if notificationsStore.permission === 'default'}
+        <button class="btn-primary-sm" onclick={() => notificationsStore.request()}>
+          Enable
+        </button>
+      {:else if notificationsStore.permission === 'denied'}
+        <span class="notif-hint">Enable in browser site settings.</span>
+      {/if}
+    </div>
+    <p class="notif-fineprint">
+      Reminders fire while this tab is open. They'll pop up roughly when the
+      programme starts. Closed-tab notifications need a service-worker push
+      backend (not enabled yet).
+    </p>
   </section>
 
   {#if loading && !status}
@@ -192,6 +220,75 @@
     border-radius: var(--radius-sm);
     font-family: var(--font-mono);
     font-size: 0.6875rem;
+  }
+
+  .notif-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .notif-card h3 {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .notif-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+  }
+
+  .notif-status {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .notif-label {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .notif-value {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .notif-granted     { color: var(--color-success); }
+  .notif-denied      { color: var(--color-error); }
+  .notif-default     { color: var(--color-text-secondary); }
+  .notif-unsupported { color: var(--color-text-muted); }
+
+  .notif-hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .notif-fineprint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    line-height: 1.5;
+  }
+
+  .btn-primary-sm {
+    padding: var(--sp-1) var(--sp-3);
+    background: var(--color-accent);
+    color: white;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .btn-primary-sm:hover {
+    background: var(--color-accent-hover);
   }
 
   .loading {

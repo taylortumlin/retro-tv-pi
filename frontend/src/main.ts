@@ -3,9 +3,11 @@ import './app.css';
 import App from './App.svelte';
 import { uiStore } from './lib/stores/ui';
 import { themeStore } from './lib/stores/theme.svelte';
+import { notificationsStore } from './lib/stores/notifications.svelte';
 import { initKeyboard, registerShortcut } from './lib/utils/keyboard';
 
 themeStore.init();
+notificationsStore.init();
 uiStore.initFromUrl();
 
 // Handle browser back/forward

@@ -41,6 +41,15 @@ export function getRemindersStore() {
       persist();
     },
 
+    markNotified(channelId: string, startTs: number) {
+      reminders = reminders.map(r =>
+        r.channelId === channelId && r.startTs === startTs
+          ? { ...r, notified: true }
+          : r
+      );
+      persist();
+    },
+
     cleanup() {
       const now = Date.now() / 1000;
       reminders = reminders.filter(r => r.startTs > now - 3600);
