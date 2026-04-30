@@ -38,6 +38,19 @@ with open(CONFIG_PATH) as f:
 
 MPV_SOCKET = CONFIG.get("mpv_socket", "/tmp/mpvsocket")
 
+# Admins set mpv_options via config.json. Anything that can load executable
+# code (--script, --input-conf, --include, --load-scripts, --lua,
+# --script-opts, --input-cmdlist, ...) would turn config write access into
+# RCE; restrict to display/decode/cache flags that are safe for the player
+# to expose.
+ALLOWED_MPV_OPTS = {
+    "fullscreen", "vo", "hwdec", "profile", "audio-display", "osd-level",
+    "osc", "really-quiet", "no-terminal", "cache", "demuxer-readahead-secs",
+    "cache-secs", "stream-buffer-size", "screen", "fs-screen", "geometry",
+    "audio-device", "ao", "volume", "mute", "input-default-bindings",
+    "input-vo-keyboard", "keepaspect", "panscan",
+}
+
 STATIC_DIR = Path(__file__).parent / "static"
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 
@@ -80,6 +93,9 @@ def start_mpv(channel_num):
     else:
         opts = CONFIG.get("mpv_options", {})
         for key, value in opts.items():
+            if key not in ALLOWED_MPV_OPTS:
+                log.warning("Ignoring disallowed mpv option: %s", key)
+                continue
             if value is True:
                 cmd.append(f"--{key}")
             elif value is not False:
