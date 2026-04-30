@@ -1,6 +1,7 @@
 <script lang="ts">
   import { epgStore } from '../../lib/stores/epg';
   import { uiStore } from '../../lib/stores/ui';
+  import { playerStore } from '../../lib/stores/player';
   import { getProgress, formatTime, formatDuration } from '../../lib/utils/time';
   import ProgressBar from '../shared/ProgressBar.svelte';
   import Badge from '../shared/Badge.svelte';
@@ -26,9 +27,9 @@
   });
 
   function watchNow() {
-    if (ch) {
-      uiStore.navigate('player');
-    }
+    if (!ch) return;
+    playerStore.setChannel(ch);
+    uiStore.navigate('player');
   }
 </script>
 

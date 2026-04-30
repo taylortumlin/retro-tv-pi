@@ -10,11 +10,13 @@
   $effect(() => {
     const ch = playerStore.currentChannel;
     if (!ch || !videoEl) return;
+    const num = parseInt(ch.number);
+    if (!Number.isFinite(num) || num <= 0) return;
 
     // Destroy previous
     streamPlayer?.destroy();
 
-    streamPlayer = createStreamPlayer(videoEl, ch.number);
+    streamPlayer = createStreamPlayer(videoEl, num);
     streamPlayer.play();
 
     return () => {

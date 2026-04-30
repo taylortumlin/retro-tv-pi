@@ -16,7 +16,7 @@
   let loaded = $state(false);
 
   $effect(() => {
-    if (!videoEl) return;
+    if (!videoEl || !channelNumber || !Number.isFinite(channelNumber)) return;
     loaded = false;
     streamPlayer = createStreamPlayer(videoEl, channelNumber);
     streamPlayer.mute(muted);

@@ -2,6 +2,7 @@
   import type { Programme } from '../../lib/types/epg';
   import { uiStore } from '../../lib/stores/ui';
   import { epgStore } from '../../lib/stores/epg';
+  import { playerStore } from '../../lib/stores/player';
   import { remindersStore } from '../../lib/stores/reminders';
   import { tuneChannel } from '../../lib/api/player';
   import { getProgress, formatTime, formatDuration, isLive, formatDate } from '../../lib/utils/time';
@@ -30,6 +31,7 @@
   }
 
   function watchNow() {
+    if (channel) playerStore.setChannel(channel);
     uiStore.navigate('player');
     onClose();
   }

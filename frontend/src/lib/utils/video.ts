@@ -11,7 +11,9 @@ export function createStreamPlayer(
   videoEl: HTMLVideoElement,
   channelNumber: string | number
 ): StreamPlayer {
-  const tsUrl = `/stream/${channelNumber}.ts`;
+  // Absolute URL is required because mpegts.js runs the loader inside a
+  // Web Worker, where relative paths cannot be resolved.
+  const tsUrl = `${location.origin}/stream/${channelNumber}.ts`;
 
   // Try mpegts.js first for MPEG-TS streams
   if (mpegts.isSupported()) {
@@ -21,9 +23,14 @@ export function createStreamPlayer(
       isLive: true,
     }, {
       enableWorker: true,
-      liveBufferLatencyChasing: true,
-      liveBufferLatencyMaxLatency: 3,
-      liveBufferLatencyMinRemain: 0.5,
+      liveBufferLatencyChasing: false,
+      liveBufferLatencyMaxLatency: 30,
+      liveBufferLatencyMinRemain: 8,
+      stashInitialSize: 512 * 1024,
+      enableStashBuffer: true,
+      autoCleanupSourceBuffer: true,
+      autoCleanupMaxBackwardDuration: 30,
+      autoCleanupMinBackwardDuration: 15,
     });
 
     player.attachMediaElement(videoEl);
@@ -49,7 +56,7 @@ export function createStreamPlayer(
   }
 
   // Fallback: native HLS (Safari) or direct
-  const hlsUrl = `/stream/${channelNumber}.m3u8`;
+  const hlsUrl = `${location.origin}/stream/${channelNumber}.m3u8`;
 
   return {
     play() {
