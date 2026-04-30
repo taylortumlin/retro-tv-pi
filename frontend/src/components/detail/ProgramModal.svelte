@@ -9,6 +9,7 @@
   import Badge from '../shared/Badge.svelte';
   import LiveIndicator from '../shared/LiveIndicator.svelte';
   import Icon from '../shared/Icon.svelte';
+  import ChannelPreview from './ChannelPreview.svelte';
   import { focusTrap } from '../../lib/actions/focusTrap';
   import { fly, fade } from 'svelte/transition';
 
@@ -77,7 +78,9 @@
   >
     <!-- Hero -->
     <div class="modal-hero">
-      {#if prog.thumbnail || prog.poster}
+      {#if live && channel}
+        <ChannelPreview channelNumber={parseInt(channel.number)} />
+      {:else if prog.thumbnail || prog.poster}
         <img src={prog.thumbnail || prog.poster} alt="" class="hero-backdrop" />
       {/if}
       <div class="modal-hero-gradient"></div>
