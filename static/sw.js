@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pitv-v5';
+const CACHE_NAME = 'pitv-v6';
 const SHELL_ASSETS = [
   '/static/manifest.json',
   '/static/icons/icon-192.png',
@@ -66,8 +66,16 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // API: network-first, stale cache fallback
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/admin/api/')) {
+  // Admin API: never cache. These responses are auth-bearing and used to
+  // include the PIN; caching them parks credentials in CacheStorage where
+  // any later browser-profile access can read them.
+  if (url.pathname.startsWith('/admin/api/')) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
+
+  // Public API: network-first, stale cache fallback.
+  if (url.pathname.startsWith('/api/')) {
     e.respondWith(
       fetch(e.request)
         .then(resp => {

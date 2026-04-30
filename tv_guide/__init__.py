@@ -40,6 +40,16 @@ def create_app() -> Flask:
         static_url_path="/static",
     )
 
+    flask_app.config.update(
+        # HttpOnly: keep the session cookie out of `document.cookie` /
+        # XSS reach. SameSite=Strict: never sent on cross-site navigations,
+        # which blocks the most common CSRF vector. Secure: would require
+        # HTTPS; this app runs on HTTP on a LAN, so leave False.
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Strict",
+        SESSION_COOKIE_SECURE=False,
+    )
+
     # Persisted Flask secret key (auto-generated on first run).
     # O_EXCL makes concurrent gunicorn workers race-safe: the loser gets
     # FileExistsError and reads the winner's value. 0o600 keeps the key

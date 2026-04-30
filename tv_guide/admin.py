@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hmac
 import json
 import os
 import subprocess
@@ -42,6 +43,20 @@ def admin_required(f):
         if time.time() - session.get("admin_ts", 0) > timeout * 60:
             session.clear()
             return jsonify({"error": "session expired"}), 401
+        # Sliding-window: each authed request refreshes the activity timestamp
+        # so timeout means "idle for N minutes" rather than "force logout
+        # N minutes after login regardless of activity".
+        session["admin_ts"] = time.time()
+        # CSRF defense-in-depth: reject form-encoded mutating requests.
+        # SameSite=Strict (set in __init__.py) is the primary defense, but
+        # has known top-level-navigation bypasses; this rejects the most
+        # common attack vector (an auto-POSTed HTML form from another
+        # LAN page).
+        if flask_request.method in ("POST", "PUT", "DELETE", "PATCH"):
+            ctype = (flask_request.content_type or "").split(";")[0].strip().lower()
+            # Allow JSON or no body. Reject form-encoded.
+            if ctype and ctype != "application/json":
+                return jsonify({"error": "JSON content-type required"}), 415
         return f(*args, **kwargs)
     return decorated
 
@@ -55,8 +70,13 @@ def admin_login():
         return jsonify({"error": "Too many attempts. Try again in 5 minutes."}), 429
     data = flask_request.get_json(silent=True) or {}
     pin = str(data.get("pin", ""))
-    expected = str(_state.CONFIG.get("admin", {}).get("pin", "1234"))
-    if pin == expected:
+    expected = _state.CONFIG.get("admin", {}).get("pin")
+    if not expected:
+        # Fail closed if no PIN is configured -- previously this fell back
+        # to "1234" which would silently accept any guesser typing the
+        # default during fresh-install windows.
+        return jsonify({"error": "Admin PIN not configured"}), 500
+    if hmac.compare_digest(pin, str(expected)):
         session["admin_authed"] = True
         session["admin_ts"] = time.time()
         clear_login_attempts(ip)
@@ -87,7 +107,14 @@ def admin_auth_check():
 @bp.route("/config")
 @admin_required
 def admin_get_config():
-    return jsonify(_state.CONFIG)
+    # Strip the PIN before responding -- the SPA never needs it (PIN is
+    # set via PUT /admin/api/config/section/admin), and leaving it in the
+    # response leaks the credential to anything that can read CacheStorage
+    # for this origin.
+    safe = dict(_state.CONFIG)
+    if isinstance(safe.get("admin"), dict):
+        safe["admin"] = {k: v for k, v in safe["admin"].items() if k != "pin"}
+    return jsonify(safe)
 
 
 @bp.route("/config", methods=["PUT"])
@@ -359,6 +386,12 @@ def admin_list_backups():
 def admin_restore_backup(filename: str):
     if "/" in filename or "\\" in filename or ".." in filename:
         return jsonify({"error": "Invalid filename"}), 400
+    # Restrict to the glob the listing endpoint produces. Without this, any
+    # sibling JSON file in BACKUPS_DIR (placed there by another process or
+    # dropped in manually) could be loaded as the live config -- including
+    # malicious mpv_options or SSRF-bait ersatztv_url.
+    if not (filename.startswith("config_") and filename.endswith(".json")):
+        return jsonify({"error": "Invalid backup filename"}), 400
     src = _state.BACKUPS_DIR / filename
     if not src.exists():
         return jsonify({"error": "Backup not found"}), 404
@@ -368,6 +401,8 @@ def admin_restore_backup(filename: str):
             data = json.load(f)
     except json.JSONDecodeError:
         return jsonify({"error": "Backup file is not valid JSON"}), 400
+    if not isinstance(data, dict) or "channels" not in data or "ersatztv_url" not in data:
+        return jsonify({"error": "Backup is missing required keys"}), 400
     atomic_write_config(data)
     _state.reload_from_disk()
     return jsonify({"ok": True, "restored": filename})
@@ -378,6 +413,8 @@ def admin_restore_backup(filename: str):
 def admin_download_backup(filename: str):
     if "/" in filename or "\\" in filename or ".." in filename:
         return jsonify({"error": "Invalid filename"}), 400
+    if not (filename.startswith("config_") and filename.endswith(".json")):
+        return jsonify({"error": "Invalid backup filename"}), 400
     src = _state.BACKUPS_DIR / filename
     if not src.exists():
         return jsonify({"error": "Backup not found"}), 404
