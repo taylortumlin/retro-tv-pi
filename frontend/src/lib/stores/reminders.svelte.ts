@@ -10,9 +10,15 @@ export interface Reminder {
 function loadFromStorage(): Reminder[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  return [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    // Defensive: a corrupt entry (null, "oops", 42, {}) parses fine but
+    // crashes downstream `.some()` / `.map()` calls and takes down the
+    // SPA on boot until storage is manually cleared.
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 let reminders = $state<Reminder[]>(loadFromStorage());

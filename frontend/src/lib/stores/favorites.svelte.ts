@@ -3,9 +3,14 @@ const STORAGE_KEY = 'pitv-favorites';
 function loadFromStorage(): Set<string> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return new Set(JSON.parse(raw));
-  } catch { /* ignore */ }
-  return new Set();
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    // Defensive: a corrupt entry (null, "oops", 42, {}) parses fine but
+    // would crash `new Set(parsed)` and take down the SPA on boot.
+    return Array.isArray(parsed) ? new Set(parsed) : new Set();
+  } catch {
+    return new Set();
+  }
 }
 
 let favoriteIds = $state<Set<string>>(loadFromStorage());

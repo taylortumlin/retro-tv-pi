@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import { playerStore } from '../../lib/stores/player';
   import { epgStore } from '../../lib/stores/epg';
   import { uiStore } from '../../lib/stores/ui';
@@ -6,6 +7,16 @@
 
   let buffer = $state('');
   let timer: ReturnType<typeof setTimeout> | null = null;
+
+  onDestroy(() => {
+    // Pending tune() must not fire after navigation; otherwise it mutates
+    // playerStore from outside a reactive context (Svelte 5 dev-mode warning)
+    // and a stale toast appears on the next view.
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  });
 
   function tune() {
     const num = parseInt(buffer);

@@ -70,25 +70,35 @@ export const notificationsStore = {
     return permission;
   },
 
-  init() {
-    if (typeof window === 'undefined') return;
-    if (!('Notification' in window)) {
-      permission = 'unsupported';
-      return;
-    }
-    permission = Notification.permission;
-    if (intervalId) clearInterval(intervalId);
-    intervalId = setInterval(check, CHECK_INTERVAL_MS);
-    // Run once immediately so reminders that came due while the tab was
-    // backgrounded fire as soon as it gains focus again.
-    check();
-    // Also tick right when the tab regains focus.
-    window.addEventListener('focus', check);
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') check();
-    });
-  },
+  init,
 
   // Expose for tests.
   _check: check,
 };
+
+// Hoisted listeners so they have stable identities -- the previous
+// inline-arrow visibilitychange handler couldn't be removed and stacked
+// on every HMR / explicit re-init, causing check() to fire N times per
+// focus event.
+const onFocus = () => check();
+const onVisibility = () => {
+  if (document.visibilityState === 'visible') check();
+};
+let listenersBound = false;
+
+function init(): void {
+  if (typeof window === 'undefined') return;
+  if (!('Notification' in window)) {
+    permission = 'unsupported';
+    return;
+  }
+  permission = Notification.permission;
+  if (intervalId) clearInterval(intervalId);
+  intervalId = setInterval(check, CHECK_INTERVAL_MS);
+  check();
+  if (!listenersBound) {
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    listenersBound = true;
+  }
+}
