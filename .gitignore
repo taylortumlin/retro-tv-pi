@@ -1,9 +1,23 @@
-.DS_Store
-._*
+# Secrets & environment
+.env
+.admin_secret
+
+# Python
 __pycache__/
 *.pyc
 *.pyo
-.env
-*.png
-*.mp4
-pi-client/.claude/
+
+# Runtime
+gunicorn.ctl
+*.sock
+*.pid
+
+# Backups (local only)
+backups/
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db

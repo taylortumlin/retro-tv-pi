@@ -1,6 +1,5 @@
-const CACHE_NAME = 'pitv-v2';
+const CACHE_NAME = 'pitv-v4';
 const SHELL_ASSETS = [
-  '/',
   '/static/manifest.json',
   '/static/icons/icon-192.png',
   '/static/icons/icon-512.png',
@@ -25,17 +24,17 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Network-first for API, cache-first for static assets
+// Network-first for pages & API, cache-first for static assets only
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Never cache video streams
-  if (url.pathname.includes('/iptv/') || url.pathname.endsWith('.ts') || url.pathname.endsWith('.m3u8')) {
+  // Never cache video streams or proxied images
+  if (url.pathname.includes('/iptv/') || url.pathname.endsWith('.ts') || url.pathname.endsWith('.m3u8') || url.pathname.startsWith('/stream/') || url.pathname.startsWith('/proxy/')) {
     return;
   }
 
-  // API requests: network-first, fallback to cache
-  if (url.pathname.startsWith('/api/')) {
+  // HTML pages & API: network-first, fallback to cache
+  if (url.pathname.startsWith('/api/') || e.request.mode === 'navigate' || url.pathname === '/') {
     e.respondWith(
       fetch(e.request)
         .then(resp => {
@@ -48,18 +47,23 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Static assets & shell: cache-first, fallback to network
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(resp => {
-        // Cache static assets for offline use
-        if (resp.ok && (url.pathname.startsWith('/static/') || url.pathname === '/')) {
-          const clone = resp.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-        }
-        return resp;
-      });
-    })
-  );
+  // Static assets only: cache-first, fallback to network
+  if (url.pathname.startsWith('/static/')) {
+    e.respondWith(
+      caches.match(e.request).then(cached => {
+        if (cached) return cached;
+        return fetch(e.request).then(resp => {
+          if (resp.ok) {
+            const clone = resp.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+          }
+          return resp;
+        });
+      })
+    );
+    return;
+  }
+
+  // Everything else: network only
+  e.respondWith(fetch(e.request));
 });

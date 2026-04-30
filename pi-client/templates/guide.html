@@ -1073,13 +1073,17 @@ body.crt-on *{text-shadow:0 0 2px rgba(100,255,150,.15)}
 }
 .ws-hourly-temp{font-size:11px;font-weight:700;color:#fff}
 .ws-hourly-time{font-size:9px;color:#80c0e0}
-/* --- 5-day forecast --- */
+/* --- Daily forecast --- */
 .ws-daily-row{
   display:flex;gap:10px;width:100%;max-width:720px;
   justify-content:center;flex-wrap:wrap;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;scrollbar-color:rgba(128,192,224,.3) transparent;
 }
+.ws-daily-row::-webkit-scrollbar{height:6px}
+.ws-daily-row::-webkit-scrollbar-thumb{background:rgba(128,192,224,.3);border-radius:3px}
 .ws-day-card{
-  flex:1;min-width:100px;max-width:140px;
+  flex:0 0 auto;min-width:100px;max-width:140px;
   background:linear-gradient(180deg,rgba(0,30,60,.6),rgba(0,20,40,.8));
   border:1px solid;border-color:rgba(128,192,224,.2) rgba(0,16,32,.5) rgba(0,16,32,.5) rgba(128,192,224,.2);
   padding:14px 10px;text-align:center;
@@ -1107,11 +1111,31 @@ body.crt-on *{text-shadow:0 0 2px rgba(100,255,150,.15)}
   min-width:50px;padding-top:2px}
 .ws-news-title{font-size:13px;font-weight:700;color:#fff;line-height:1.4}
 .ws-news-time{font-size:10px;color:#80c0e0;margin-left:auto;white-space:nowrap;padding-top:2px}
+.ws-news-clickable{cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.ws-news-clickable:hover{border-color:rgba(255,140,0,.5);box-shadow:0 0 8px rgba(255,140,0,.25)}
 /* --- News detail screen --- */
 .ws-news-detail{width:100%;max-width:650px;text-align:center}
 .ws-news-detail-title{font-size:20px;font-weight:900;color:#fff;line-height:1.4;margin-bottom:16px}
 .ws-news-detail-source{font-size:12px;color:#ff8c00;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
 .ws-news-detail-summary{font-size:15px;color:#c0d8e8;line-height:1.8}
+/* --- News nav buttons --- */
+.ws-news-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:18px}
+.ws-news-nav-btn{
+  background:linear-gradient(180deg,rgba(48,128,176,.4),rgba(0,30,60,.6));
+  border:1px solid rgba(128,192,224,.3);color:#80c0e0;
+  padding:6px 18px;font-size:13px;font-weight:700;cursor:pointer;
+  transition:background .2s,color .2s;
+}
+.ws-news-nav-btn:hover{background:rgba(255,140,0,.3);color:#fff;border-color:rgba(255,140,0,.5)}
+.ws-news-counter{font-size:12px;color:#80c0e0;font-weight:600;min-width:50px;text-align:center}
+/* --- Pause indicator --- */
+.ws-pause-indicator{
+  display:none;font-size:11px;font-weight:900;color:#ff8c00;
+  letter-spacing:1px;text-transform:uppercase;
+  animation:wsPauseBlink 1s step-end infinite;
+}
+.ws-pause-indicator.visible{display:inline}
+@keyframes wsPauseBlink{0%,100%{opacity:1}50%{opacity:0}}
 /* --- Bottom news ticker --- */
 .ws-news-bar{
   flex-shrink:0;height:32px;overflow:hidden;
@@ -1377,6 +1401,7 @@ body.crt-on *{text-shadow:0 0 2px rgba(100,255,150,.15)}
     <span class="ws-clock" id="ws-clock"></span>
     <button class="ws-music-btn" id="ws-music-btn" onclick="wsToggleMusic()" style="display:none" title="Toggle music">&#9835;</button>
     <span class="ws-track-name" id="ws-track-name" style="display:none"></span>
+    <span class="ws-pause-indicator" id="ws-pause-indicator">PAUSED</span>
     <button class="ws-exit" onclick="setView('guide')">ESC</button>
   </div>
   <div class="ws-body" id="ws-body">
@@ -1485,7 +1510,7 @@ function hlsPlay(vid,chNum,muted){
 
   // Prefer mpegts.js with MPEG-TS stream
   if(typeof mpegts!=='undefined'&&mpegts.isSupported()){
-    const url=ETV+'/iptv/channel/'+chNum+'.ts';
+    const url=location.origin+'/stream/'+chNum+'.ts';
     const player=mpegts.createPlayer({type:'mpegts',isLive:true,url:url},{
       enableWorker:true,
       liveBufferLatencyChasing:false,
@@ -1504,7 +1529,7 @@ function hlsPlay(vid,chNum,muted){
   }
   // Fallback: native HLS for Safari (iOS/macOS)
   else if(vid.canPlayType('application/vnd.apple.mpegurl')){
-    vid.src=ETV+'/iptv/channel/'+chNum+'.m3u8';
+    vid.src=location.origin+'/stream/'+chNum+'.m3u8';
     vid.play().catch(()=>{});
   }
 }
@@ -1740,11 +1765,12 @@ function closeDet(){
 }
 
 // ====== WATCH PLAYER ======
-let wCurrent=null,wUITimer=null,wUIVisible=true;
+let wCurrent=null,wPrevious=null,wUITimer=null,wUIVisible=true;
 
 function watchOpen(chNum){
   const el=document.getElementById('watch');
   el.classList.add('open');
+  if(wCurrent&&wCurrent!==chNum) wPrevious=wCurrent;
   wCurrent=chNum;
   watchTune(chNum);
   watchShowUI();
@@ -1766,6 +1792,7 @@ function watchClose(){
 }
 
 function watchTune(chNum){
+  if(wCurrent&&wCurrent!==chNum) wPrevious=wCurrent;
   wCurrent=chNum;
   const vid=document.getElementById('w-video');
   const loading=document.getElementById('w-loading');
@@ -1900,15 +1927,23 @@ function miniGuideRender(){
 let quadActive=false, quadSelected=0, quadChannels=[null,null,null,null];
 
 function quadOpen(){
-  if(!D||D.channels.length<4||!wCurrent)return;
+  if(!D||D.channels.length<4||wCurrent==null)return;
   quadActive=true;
   // Mute underlying watch stream
   const wv=document.getElementById('w-video');
   if(wv)wv.muted=true;
-  // Current channel in slot 0, next 3 in order
-  const nums=D.channels.map(c=>c.number);
-  const idx=nums.indexOf(Number(wCurrent));
-  for(let i=0;i<4;i++) quadChannels[i]=nums[(idx+i)%nums.length];
+  // Always put current watched channel in top-left (slot 0)
+  const currentCh=Number(wCurrent);
+  const nums=D.channels.map(c=>Number(c.number));
+  const idx=nums.indexOf(currentCh);
+  quadChannels[0]=currentCh;
+  // Fill remaining 3 slots with next sequential channels, skipping current
+  let ni=idx>=0?idx:0;
+  for(let i=1;i<4;i++){
+    ni=(ni+1)%nums.length;
+    if(nums[ni]===currentCh) ni=(ni+1)%nums.length;
+    quadChannels[i]=nums[ni];
+  }
   document.getElementById('quad').classList.add('open');
   document.getElementById('quad-close').style.display='flex';
   const mn=document.getElementById('mob-nav');if(mn)mn.style.display='none';
@@ -2319,8 +2354,11 @@ document.addEventListener('keydown',e=>{
     else if(currentView==='weather')setView('guide');
     else{closeDet();if(currentView==='prevue')setView('guide')}
   }
-  if(e.key==='ArrowLeft')shiftTime(-1);
-  if(e.key==='ArrowRight')shiftTime(1);
+  if(e.key===' '&&currentView==='weather'){e.preventDefault();wsTogglePause();return}
+  if(e.key==='ArrowLeft'){if(currentView==='weather'){wsGo(-1)}else{shiftTime(-1)}return}
+  if(e.key==='ArrowRight'){if(currentView==='weather'){wsGo(1)}else{shiftTime(1)}return}
+  if(e.key==='ArrowUp'&&currentView==='weather'&&wsCurrent===6){wsNewsNav(-1);return}
+  if(e.key==='ArrowDown'&&currentView==='weather'&&wsCurrent===6){wsNewsNav(1);return}
   if(e.key==='T'&&e.shiftKey){cycleTheme();return}
   if(e.key==='g'){
     if(document.getElementById('watch').classList.contains('open'))miniGuideToggle();
@@ -2332,6 +2370,9 @@ document.addEventListener('keydown',e=>{
   if(e.key==='w')setView('weather');
   if(e.key==='q'){
     if(document.getElementById('watch').classList.contains('open'))quadOpen();
+  }
+  if(e.key==='l'){
+    if(document.getElementById('watch').classList.contains('open')&&wPrevious) watchTune(wPrevious);
   }
   if(e.key==='r')toggleRemote();
   if(e.key==='c')tickerToggle();
@@ -2708,6 +2749,7 @@ const WS_SCREENS=7;
 let wsNewsData=[];
 let wsNewsIdx=0; // which news story to feature on detail screen
 let wsPlaylistQueue=[],wsTrackIdx=0;
+let wsPaused=false,wsTouchStartX=0,wsTouchStartY=0;
 
 async function wsFetch(){
   try{
@@ -2769,10 +2811,41 @@ function wsUpdateTrackDisplay(){
 }
 function wsStop(){
   if(wsCycleTimer){clearInterval(wsCycleTimer);wsCycleTimer=null}
+  wsPaused=false;
+  document.getElementById('ws-pause-indicator').classList.remove('visible');
   const audio=document.getElementById('ws-audio');
   audio.pause();audio.currentTime=0;audio.onended=null;
   wsMusicPlaying=false;
   document.getElementById('ws-music-btn').classList.remove('playing');
+}
+function wsTogglePause(){
+  wsPaused=!wsPaused;
+  const ind=document.getElementById('ws-pause-indicator');
+  if(wsPaused){
+    if(wsCycleTimer){clearInterval(wsCycleTimer);wsCycleTimer=null}
+    ind.classList.add('visible');
+  }else{
+    wsCycleTimer=setInterval(wsNext,9000);
+    ind.classList.remove('visible');
+  }
+}
+function wsPauseAutoResume(){
+  if(!wsPaused){
+    wsPaused=true;
+    if(wsCycleTimer){clearInterval(wsCycleTimer);wsCycleTimer=null}
+    document.getElementById('ws-pause-indicator').classList.add('visible');
+  }
+}
+function wsGo(dir){
+  wsPauseAutoResume();
+  wsCurrent=(wsCurrent+dir+WS_SCREENS)%WS_SCREENS;
+  if(wsCurrent===6&&wsNewsData.length)wsRenderNewsDetail();
+  wsShowScreen(wsCurrent);
+}
+function wsNewsNav(dir){
+  if(!wsNewsData.length)return;
+  wsNewsIdx=(wsNewsIdx+dir+wsNewsData.length)%wsNewsData.length;
+  wsRenderNewsDetail();
 }
 function wsNext(){
   wsCurrent=(wsCurrent+1)%WS_SCREENS;
@@ -2860,7 +2933,7 @@ function wsRenderDaily(){
   const el=document.getElementById('ws-screen-3');
   const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   let cards='';
-  for(let i=0;i<Math.min(5,d.length);i++){
+  for(let i=0;i<d.length;i++){
     const day=d[i];
     const dt=new Date(day.date+'T12:00:00');
     const name=i===0?'Today':days[dt.getDay()];
@@ -2871,7 +2944,8 @@ function wsRenderDaily(){
       <div class="ws-day-precip">\uD83D\uDCA7 ${day.precip_probability}%</div>
     </div>`;
   }
-  el.innerHTML=`<div class="ws-section-title">5-Day Forecast</div><div class="ws-daily-row">${cards}</div>`;
+  const title=d.length+'-Day Forecast';
+  el.innerHTML=`<div class="ws-section-title">${title}</div><div class="ws-daily-row">${cards}</div>`;
 }
 function wsRenderOutlook(){
   const d=wsData.daily;const c=wsData.current;
@@ -2898,8 +2972,9 @@ function wsRenderNews(){
   }
   const items=wsNewsData.slice(0,8);
   let h='<div class="ws-section-title">Top Headlines</div><div class="ws-news-list">';
-  for(const n of items){
-    h+=`<div class="ws-news-item">
+  for(let i=0;i<items.length;i++){
+    const n=items[i];
+    h+=`<div class="ws-news-item ws-news-clickable" data-news-idx="${i}">
       <span class="ws-news-source">${n.source}</span>
       <span class="ws-news-title">${n.title}</span>
       ${n.published?`<span class="ws-news-time">${n.published}</span>`:''}
@@ -2914,13 +2989,19 @@ function wsRenderNewsDetail(){
     el.innerHTML='<div class="ws-section-title">News</div><div class="ws-outlook">No stories available</div>';
     return;
   }
-  const story=wsNewsData[wsNewsIdx%wsNewsData.length];
+  const idx=wsNewsIdx%wsNewsData.length;
+  const story=wsNewsData[idx];
   el.innerHTML=`
     <div class="ws-section-title">In The News</div>
     <div class="ws-news-detail">
       <div class="ws-news-detail-source">${story.source}</div>
       <div class="ws-news-detail-title">${story.title}</div>
       ${story.summary?`<div class="ws-news-detail-summary">${story.summary}</div>`:''}
+    </div>
+    <div class="ws-news-nav">
+      <button class="ws-news-nav-btn" onclick="wsNewsNav(-1)">\u25C0 Prev</button>
+      <span class="ws-news-counter">${idx+1} / ${wsNewsData.length}</span>
+      <button class="ws-news-nav-btn" onclick="wsNewsNav(1)">Next \u25B6</button>
     </div>`;
 }
 function wsRenderNewsTicker(){
@@ -2935,6 +3016,54 @@ function wsRenderNewsTicker(){
   const dur=Math.max(40,wsNewsData.length*6);
   track.style.setProperty('--ws-news-dur',dur+'s');
 }
+
+// --- WeatherStar event listeners ---
+// Dot click navigation
+document.getElementById('ws-dots').addEventListener('click',e=>{
+  const dot=e.target.closest('.ws-dot');
+  if(!dot)return;
+  const idx=parseInt(dot.dataset.i,10);
+  if(isNaN(idx))return;
+  wsPauseAutoResume();
+  wsCurrent=idx;
+  if(wsCurrent===6&&wsNewsData.length)wsRenderNewsDetail();
+  wsShowScreen(wsCurrent);
+});
+
+// Touch/swipe navigation
+(function(){
+  const body=document.getElementById('ws-body');
+  body.addEventListener('touchstart',e=>{
+    wsTouchStartX=e.changedTouches[0].clientX;
+    wsTouchStartY=e.changedTouches[0].clientY;
+  },{passive:true});
+  body.addEventListener('touchend',e=>{
+    // Skip swipe if touch is inside daily-row (let native scroll work)
+    if(e.target.closest('.ws-daily-row'))return;
+    const dx=e.changedTouches[0].clientX-wsTouchStartX;
+    const dy=e.changedTouches[0].clientY-wsTouchStartY;
+    if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy))return; // too short or vertical
+    wsGo(dx<0?1:-1);
+  },{passive:true});
+})();
+
+// Clickable news headlines
+document.getElementById('ws-body').addEventListener('click',e=>{
+  const item=e.target.closest('.ws-news-clickable');
+  if(item){
+    const idx=parseInt(item.dataset.newsIdx,10);
+    if(!isNaN(idx)){
+      wsNewsIdx=idx;
+      wsRenderNewsDetail();
+      wsPauseAutoResume();
+      wsCurrent=6;
+      wsShowScreen(6);
+    }
+    return;
+  }
+  // Clicking elsewhere in ws-body toggles pause (only in weather view)
+  if(currentView==='weather'&&!e.target.closest('button')&&!e.target.closest('.ws-news-nav-btn'))wsTogglePause();
+});
 
 // ====== INIT ======
 load();
