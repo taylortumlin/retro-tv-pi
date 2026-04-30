@@ -3,6 +3,7 @@
   import PlayerOverlay from '../components/player/PlayerOverlay.svelte';
   import MiniGuide from '../components/player/MiniGuide.svelte';
   import ChannelStrip from '../components/player/ChannelStrip.svelte';
+  import ChannelSurfOSD from '../components/player/ChannelSurfOSD.svelte';
   import { playerStore } from '../lib/stores/player';
   import { epgStore } from '../lib/stores/epg';
 
@@ -49,6 +50,7 @@
   {/if}
 
   <ChannelStrip visible={showOverlay} />
+  <ChannelSurfOSD />
 </div>
 
 <style>
