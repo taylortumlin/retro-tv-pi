@@ -9,6 +9,7 @@
   import SearchView from './views/SearchView.svelte';
   import UpNextView from './views/UpNextView.svelte';
   import TonightView from './views/TonightView.svelte';
+  import QuadView from './views/QuadView.svelte';
   import ProgramModal from './components/detail/ProgramModal.svelte';
 </script>
 
@@ -30,6 +31,8 @@
       <UpNextView />
     {:else if uiStore.activeView === 'tonight'}
       <TonightView />
+    {:else if uiStore.activeView === 'quad'}
+      <QuadView />
     {:else}
       <div style="padding: var(--sp-10); text-align: center; color: var(--color-text-muted)">
         <h2 style="font-size: var(--text-2xl); color: var(--color-text); margin-bottom: var(--sp-3)">

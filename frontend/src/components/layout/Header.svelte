@@ -16,6 +16,7 @@
     { view: 'tonight', label: 'Tonight' },
     { view: 'discover', label: 'Discover' },
     { view: 'player', label: 'Player' },
+    { view: 'quad', label: 'Quad' },
     { view: 'weather', label: 'Weather' },
     { view: 'admin', label: 'Admin' },
   ];
