@@ -71,7 +71,7 @@ jobs:
 
       - name: Compile check
         run: |
-          python -m compileall -q tv_guide.py tv_player.py
+          python -m compileall -q tv_guide tv_player.py
 
       # Import smoke would require a fixture config.json (today the module
       # reads config at import-time). Add it after the package refactor.
