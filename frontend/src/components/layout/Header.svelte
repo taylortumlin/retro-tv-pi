@@ -12,6 +12,7 @@
 
   const navItems: { view: ViewName; label: string }[] = [
     { view: 'guide', label: 'Guide' },
+    { view: 'prevue', label: 'Prevue' },
     { view: 'upnext', label: 'Up Next' },
     { view: 'tonight', label: 'Tonight' },
     { view: 'discover', label: 'Discover' },
