@@ -1,13 +1,31 @@
-"""News headline fetcher (RSS via feedparser). Behavior identical to the monolith."""
+"""News headline fetcher (RSS via feedparser)."""
 
 from __future__ import annotations
 
 import re
 import time
+from typing import Any
 
 import feedparser
+import requests
 
 from . import _state
+
+
+def fetch_feed(url: str) -> Any:
+    """Fetch an RSS URL with a hard timeout, then hand the bytes to feedparser.
+
+    feedparser.parse(url) has no timeout knob; a slow/hung feed would block
+    the entire epg_refresh_loop thread, freezing weather + EPG refreshes
+    too. Doing the HTTP fetch ourselves bounds the wait at 10s.
+    """
+    try:
+        r = requests.get(url, timeout=10, headers={"User-Agent": "PiTV/1.0"})
+        r.raise_for_status()
+        return feedparser.parse(r.content)
+    except Exception as e:
+        print(f"News feed fetch error {url}: {e}")
+        return None
 
 
 def fetch_news() -> None:
@@ -19,8 +37,10 @@ def fetch_news() -> None:
     headlines = []
     seen_titles = set()
     for feed_info in feeds:
+        parsed = fetch_feed(feed_info["url"])
+        if parsed is None:
+            continue
         try:
-            parsed = feedparser.parse(feed_info["url"])
             for entry in parsed.entries:
                 title = entry.get("title", "").strip()
                 if title and title not in seen_titles:
@@ -43,6 +63,7 @@ def fetch_news() -> None:
                     })
         except Exception as e:
             print(f"News feed error ({feed_info.get('name', '?')}): {e}")
-    _state.news_cache["data"] = headlines
-    _state.news_cache["last_fetch"] = time.time()
-    print(f"News updated: {len(_state.news_cache['data'])} headlines")
+    with _state.cache_lock:
+        _state.news_cache["data"] = headlines
+        _state.news_cache["last_fetch"] = time.time()
+    print(f"News updated: {len(headlines)} headlines")

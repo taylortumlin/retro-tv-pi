@@ -46,7 +46,7 @@ def fetch_weather() -> None:
         data = resp.json()
         d = data.get("current", {})
         code = d.get("weather_code", 0)
-        _state.weather_cache["data"] = {
+        current_data = {
             "temperature": d.get("temperature_2m"),
             "feels_like": d.get("apparent_temperature"),
             "condition": WMO_CODES.get(code, "Unknown"),
@@ -72,7 +72,6 @@ def fetch_weather() -> None:
                 "condition": WMO_CODES.get(h_codes[i] if i < len(h_codes) else 0, "Unknown"),
                 "precip_probability": h_precip[i] if i < len(h_precip) else 0,
             })
-        _state.weather_cache["hourly"] = hourly
         # Daily forecast.
         daily_raw = data.get("daily", {})
         daily = []
@@ -92,8 +91,13 @@ def fetch_weather() -> None:
                 "precip_probability": d_precip[i] if i < len(d_precip) else 0,
                 "uv_index": d_uv[i] if i < len(d_uv) else None,
             })
-        _state.weather_cache["daily"] = daily
-        _state.weather_cache["last_fetch"] = time.time()
-        print(f"Weather updated: {_state.weather_cache['data']['temperature']}°{_state.weather_cache['data']['unit']} {_state.weather_cache['data']['condition']}")
+        # Atomic publish under the cache lock so readers never see a half-
+        # updated weather snapshot (e.g. new "data" against stale "hourly").
+        with _state.cache_lock:
+            _state.weather_cache["data"] = current_data
+            _state.weather_cache["hourly"] = hourly
+            _state.weather_cache["daily"] = daily
+            _state.weather_cache["last_fetch"] = time.time()
+        print(f"Weather updated: {current_data['temperature']}°{current_data['unit']} {current_data['condition']}")
     except Exception as e:
         print(f"Weather fetch error: {e}")

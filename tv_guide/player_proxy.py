@@ -17,11 +17,13 @@ bp = Blueprint("player_proxy", __name__)
 def proxy_player(endpoint: str):
     url = f"{_state.PLAYER_URL}/api/{endpoint}"
     try:
+        # `with` ensures the underlying connection is released back to the
+        # pool even though `.json()` reads the body eagerly.
         if flask_request.method == "POST":
-            resp = requests.post(url, timeout=5)
-        else:
-            resp = requests.get(url, timeout=5)
-        return jsonify(resp.json())
+            with requests.post(url, timeout=5) as resp:
+                return jsonify(resp.json())
+        with requests.get(url, timeout=5) as resp:
+            return jsonify(resp.json())
     except requests.ConnectionError:
         return jsonify({
             "error": "Player not running",

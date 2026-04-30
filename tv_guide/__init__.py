@@ -93,8 +93,33 @@ def _startup() -> None:
     start_background_refresh()
 
 
+def _startup_once() -> None:
+    """Run _startup() in only one gunicorn worker.
+
+    Default sync workers each import the module and would each fetch
+    EPG/weather/news on boot -- N× ErsatzTV / Open-Meteo / RSS load and N
+    duplicate background-refresh threads competing on the cache. A
+    process-wide flock on /tmp ensures only the winner does the work; the
+    others skip and use the shared cache as it gets populated.
+    """
+    import fcntl
+    import tempfile
+    lock_path = Path(tempfile.gettempdir()) / "pi-tv-startup.lock"
+    f = open(lock_path, "w")
+    try:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        # Another worker holds the lock -- skip startup work, but the
+        # cache will be populated cooperatively as soon as the first
+        # request hits a lazy-fetch endpoint.
+        f.close()
+        return
+    # Hold the lock for process lifetime; do NOT close `f`.
+    _startup()
+
+
 app = create_app()
-_startup()
+_startup_once()
 
 
 def main() -> None:

@@ -64,9 +64,10 @@ def fetch_epg() -> bool:
                 "thumbnail": still,
             })
         channels.sort(key=lambda c: int(c["number"]) if c["number"].isdigit() else 999)
-        _state.epg_cache["channels"] = channels
-        _state.epg_cache["programmes"] = programmes
-        _state.epg_cache["last_update"] = datetime.now().isoformat()
+        with _state.cache_lock:
+            _state.epg_cache["channels"] = channels
+            _state.epg_cache["programmes"] = programmes
+            _state.epg_cache["last_update"] = datetime.now().isoformat()
         auto_import_channels()
         return True
     except Exception as e:

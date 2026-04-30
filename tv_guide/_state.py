@@ -9,6 +9,7 @@ at import time.
 from __future__ import annotations
 
 import json
+import threading
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
@@ -30,6 +31,12 @@ news_cache = {"data": None, "last_fetch": 0}
 
 # Rate limiting bookkeeping for PIN auth.
 _login_attempts: dict = {}
+
+# Single lock guarding writes to all three caches. Readers should snapshot
+# coupled data (e.g. channels + programmes) under the lock and iterate
+# outside it, otherwise a reader can hold the OLD channels list against
+# the NEW programmes list and produce inconsistent now-playing snapshots.
+cache_lock = threading.Lock()
 
 
 def reload_from_disk() -> None:

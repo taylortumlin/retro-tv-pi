@@ -11,7 +11,6 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from functools import wraps
 
-import feedparser
 import requests
 from flask import Blueprint, Response, jsonify, request as flask_request, session
 
@@ -24,6 +23,7 @@ from .config_io import (
     record_failed_login,
 )
 from .epg import fetch_epg
+from .news import fetch_feed
 from .weather import WMO_CODES
 
 bp = Blueprint("admin", __name__)
@@ -274,8 +274,10 @@ def admin_test_feed():
     url = data.get("url", "")
     if not url:
         return jsonify({"ok": False, "error": "No URL provided"})
+    parsed = fetch_feed(url)
+    if parsed is None:
+        return jsonify({"ok": False, "error": "Feed fetch failed (timeout or HTTP error)"})
     try:
-        parsed = feedparser.parse(url)
         count = len(parsed.entries)
         titles = [e.get("title", "")[:80] for e in parsed.entries[:3]]
         return jsonify({"ok": True, "entry_count": count, "sample_titles": titles})
