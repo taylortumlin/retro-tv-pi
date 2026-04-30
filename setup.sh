@@ -52,7 +52,7 @@ echo "[4/10] Copying application files..."
 mkdir -p "$INSTALL_DIR/templates" "$INSTALL_DIR/static" "$INSTALL_DIR/frontend"
 
 cp "$SCRIPT_DIR/tv_player.py" "$INSTALL_DIR/"
-cp "$SCRIPT_DIR/tv_guide.py" "$INSTALL_DIR/"
+cp -r "$SCRIPT_DIR/tv_guide" "$INSTALL_DIR/"
 cp "$SCRIPT_DIR/config.json" "$INSTALL_DIR/"
 cp "$SCRIPT_DIR/requirements.txt" "$INSTALL_DIR/"
 
@@ -72,7 +72,7 @@ cp "$SCRIPT_DIR/frontend/package.json" "$SCRIPT_DIR/frontend/package-lock.json" 
    "$SCRIPT_DIR/frontend/tsconfig.node.json" "$SCRIPT_DIR/frontend/index.html" \
    "$INSTALL_DIR/frontend/"
 
-chmod +x "$INSTALL_DIR/tv_player.py" "$INSTALL_DIR/tv_guide.py"
+chmod +x "$INSTALL_DIR/tv_player.py"
 
 # [5/10] Create .env if it doesn't exist
 if [ ! -f "$INSTALL_DIR/.env" ]; then
@@ -123,7 +123,7 @@ echo "   - Set ERSATZTV_URL, DB_URL, FLASK_SECRET_KEY, etc."
 echo ""
 echo "2. Test manually first:"
 echo "   python3 $INSTALL_DIR/tv_player.py"
-echo "   python3 $INSTALL_DIR/tv_guide.py"
+echo "   python3 -m tv_guide  (from $INSTALL_DIR)"
 echo ""
 echo "3. Start the services:"
 echo "   sudo systemctl start tv-player tv-guide"
