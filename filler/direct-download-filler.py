@@ -62,42 +62,72 @@ def get_file_list(identifier):
 
 
 def download_file(identifier, filename, save_dir, existing_size=0):
-    """Download a single file from archive.org with resume support."""
+    """Download a single file from archive.org with resume support.
+
+    Writes to <name>.part and only renames on full completion, so a
+    Ctrl+C mid-download leaves a `.part` file (resume target) rather
+    than a partially-written final file that looks complete.
+    """
     url = f"https://archive.org/download/{identifier}/{requests.utils.quote(filename)}"
     filepath = Path(save_dir) / identifier / filename
 
-    # Create directory
-    filepath.parent.mkdir(parents=True, exist_ok=True)
+    # Path-traversal guard: filename comes from archive.org's metadata
+    # (user-uploaded), so a "name": "../../etc/foo" must not escape the
+    # per-identifier dir.
+    base = (Path(save_dir) / identifier).resolve()
+    try:
+        resolved = filepath.resolve()
+        resolved.relative_to(base)
+    except (ValueError, RuntimeError):
+        return "error: unsafe filename", 0
 
-    # Check if already fully downloaded
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    part = filepath.with_suffix(filepath.suffix + ".part")
+
+    # Already fully downloaded.
     if filepath.exists():
         local_size = filepath.stat().st_size
         if existing_size > 0 and local_size >= existing_size:
             return "exists", local_size
 
-        # Resume partial download
-        headers = {"Range": f"bytes={local_size}-"}
-        mode = "ab"
-        downloaded = local_size
+    # Resume from .part if present.
+    if part.exists():
+        downloaded = part.stat().st_size
+        headers = {"Range": f"bytes={downloaded}-"}
     else:
-        headers = {}
-        mode = "wb"
         downloaded = 0
+        headers = {}
 
     try:
-        r = SESSION.get(url, headers=headers, stream=True, timeout=30)
-        if r.status_code == 416:  # Range not satisfiable = already complete
-            return "exists", downloaded
-        r.raise_for_status()
+        with SESSION.get(url, headers=headers, stream=True, timeout=30) as r:
+            if r.status_code == 416:
+                # Server says the byte range is past EOF; the .part is
+                # already complete.
+                if part.exists():
+                    part.rename(filepath)
+                    downloaded = filepath.stat().st_size
+                return "exists", downloaded
+            r.raise_for_status()
 
-        total = int(r.headers.get("content-length", 0)) + downloaded
+            # Some CDNs ignore Range and return 200 with the full file
+            # from offset 0. Append-mode would corrupt the .part with
+            # duplicate header bytes; restart cleanly instead.
+            if headers.get("Range") and r.status_code == 200:
+                downloaded = 0
+                mode = "wb"
+            elif headers.get("Range") and r.status_code == 206:
+                mode = "ab"
+            else:
+                mode = "wb"
 
-        with open(filepath, mode) as f:
-            for chunk in r.iter_content(chunk_size=1024 * 1024):  # 1MB chunks
-                if chunk:
-                    f.write(chunk)
-                    downloaded += len(chunk)
+            with open(part, mode) as f:
+                for chunk in r.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        f.write(chunk)
+                        downloaded += len(chunk)
 
+        # Atomic promote: only on successful completion.
+        part.rename(filepath)
         return "ok", downloaded
     except Exception as e:
         return f"error: {e}", downloaded
