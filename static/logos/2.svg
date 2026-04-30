@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" rx="24" fill="#1a1a1a"/>
+  <!-- Theater Masks -->
+  <g fill="#c9a84c">
+    <!-- Happy mask -->
+    <path d="M50,70 Q50,40 80,40 L110,40 Q140,40 140,70 L140,100 Q140,130 95,140 Q50,130 50,100 Z" fill="none" stroke="#c9a84c" stroke-width="8" stroke-linejoin="round"/>
+    <circle cx="78" cy="75" r="8"/>
+    <circle cx="112" cy="75" r="8"/>
+    <path d="M75,105 Q95,125 115,105" fill="none" stroke="#c9a84c" stroke-width="7" stroke-linecap="round"/>
+    <!-- Sad mask (offset behind) -->
+    <path d="M70,90 Q70,65 95,62 L120,62 Q150,62 155,90 L158,115 Q158,148 115,158 Q75,148 70,118 Z" fill="#1a1a1a" stroke="#c9a84c" stroke-width="6" stroke-linejoin="round"/>
+    <circle cx="98" cy="98" r="6"/>
+    <circle cx="132" cy="98" r="6"/>
+    <path d="M100,135 Q115,120 130,135" fill="none" stroke="#c9a84c" stroke-width="6" stroke-linecap="round"/>
+  </g>
+</svg>

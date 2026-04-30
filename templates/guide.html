@@ -1,0 +1,3096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pi TV Guide</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pi TV">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --c-bg:#0f0f0f;
+  --c-bg-raised:#1a1a1a;
+  --c-bg-hover:#222;
+  --c-surface:#252525;
+  --c-surface-2:#2e2e2e;
+  --c-border:#333;
+  --c-border-light:#444;
+  --c-text:#ececec;
+  --c-text-secondary:#999;
+  --c-text-dim:#666;
+  --c-accent:#3b9eff;
+  --c-accent-dim:rgba(59,158,255,.1);
+  --c-gold:#e8b430;
+  --c-live:#e53935;
+  --c-green:#43a047;
+  --hdr-h:52px;
+  --radius:8px;
+  --radius-sm:5px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  /* Prevue palette */
+  --pv-bg:#000820;--pv-bg-deep:#000418;
+  --pv-grad-dark:#001040;--pv-grad-mid:#0020a0;
+  --pv-border:#3060d0;--pv-gold:#ffc800;
+  --pv-date:#6090cc;--pv-blue:#4878bb;
+  --pv-dim:#506888;--pv-time:#60a0e0;
+  --pv-sub:#88aabb;--pv-now-bg:#c00;
+  --pv-border-dim:#203060;
+  --pv-now-grad-dark:#000a30;--pv-now-grad-mid:#001860;
+  --pv-row-even:rgba(0,16,64,.3);--pv-row-active:rgba(48,96,208,.2);
+  --pv-row-border:rgba(48,96,208,.15);--pv-rating-bg:rgba(0,16,64,.4);
+}
+html{font-size:15px;scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--c-bg);color:var(--c-text);
+  min-height:100dvh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* ====== HEADER ====== */
+.hdr{
+  position:sticky;top:0;z-index:100;
+  background:rgba(15,15,15,.92);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--c-border);
+  padding:0 20px;height:var(--hdr-h);
+  display:flex;align-items:center;gap:12px;
+}
+@media all and (display-mode:standalone){
+  :root{--hdr-h:calc(52px + env(safe-area-inset-top,0px))}
+  .hdr{padding-top:env(safe-area-inset-top,0px);height:var(--hdr-h)}
+  body{padding-top:0}
+}
+.hdr-logo{font-size:17px;font-weight:800;color:var(--c-text);letter-spacing:-.3px;white-space:nowrap}
+.hdr-logo span{color:var(--c-accent)}
+.hdr-search{flex:1;max-width:280px;position:relative}
+.hdr-search input{
+  width:100%;height:34px;padding:0 12px 0 34px;
+  background:var(--c-bg-raised);border:1px solid var(--c-border);border-radius:18px;
+  color:var(--c-text);font-size:13px;outline:none;transition:border .2s;
+}
+.hdr-search input:focus{border-color:var(--c-accent)}
+.hdr-search input::placeholder{color:var(--c-text-dim)}
+.hdr-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--c-text-dim)}
+.hdr-right{display:flex;align-items:center;gap:6px;margin-left:auto}
+.hdr-clock{font-size:14px;font-weight:700;color:var(--c-gold);font-variant-numeric:tabular-nums;white-space:nowrap}
+.btn-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  height:32px;padding:0 12px;border-radius:16px;border:1px solid var(--c-border);
+  background:transparent;color:var(--c-text-secondary);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.btn-pill:hover{background:var(--c-bg-hover);color:var(--c-text)}
+.btn-pill.active{background:var(--c-accent);color:#fff;border-color:var(--c-accent)}
+.btn-icon{
+  width:32px;height:32px;border-radius:50%;border:1px solid var(--c-border);
+  background:transparent;color:var(--c-text-secondary);font-size:14px;
+  display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;
+}
+.btn-icon:hover{background:var(--c-bg-hover);color:var(--c-text)}
+.btn-icon.remote-active{background:var(--c-accent);color:#fff;border-color:var(--c-accent)}
+
+/* ====== WATCH BUTTON (inline) ====== */
+.watch-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  padding:4px 10px;border-radius:var(--radius-sm);border:none;
+  background:var(--c-accent);color:#fff;font-size:11px;font-weight:700;
+  cursor:pointer;transition:opacity .15s;white-space:nowrap;
+}
+.watch-btn:hover{opacity:.85}
+.watch-btn-sm{padding:3px 8px;font-size:10px}
+
+/* ====== NOW STRIP ====== */
+.now-strip{
+  display:flex;gap:12px;padding:14px 20px;
+  overflow-x:auto;scrollbar-width:none;
+  border-bottom:1px solid var(--c-border);
+}
+.now-strip::-webkit-scrollbar{display:none}
+.now-card{
+  flex-shrink:0;min-width:220px;max-width:300px;
+  background:var(--c-bg-raised);border:1px solid var(--c-border);border-radius:var(--radius);
+  padding:12px 16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+}
+.now-card:hover{border-color:var(--c-accent);background:var(--c-bg-hover)}
+.now-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.now-ch{font-weight:800;color:var(--c-gold);font-size:13px}
+.now-live{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--c-live);text-transform:uppercase;letter-spacing:.5px}
+.now-dot{width:5px;height:5px;border-radius:50%;background:var(--c-live);animation:pulse 1.4s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.now-title{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.now-sub{font-size:11px;color:var(--c-text-secondary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.now-actions{display:flex;gap:6px;margin-top:8px}
+.now-bar{height:3px;background:var(--c-surface-2);border-radius:3px;margin-top:8px;overflow:hidden}
+.now-bar-fill{height:100%;background:var(--c-accent);border-radius:3px;transition:width 30s linear}
+
+/* ====== TIME RULER ====== */
+.ruler{
+  display:flex;position:sticky;top:var(--hdr-h);z-index:80;
+  background:var(--c-bg);border-bottom:1px solid var(--c-border);
+}
+.ruler-ch{
+  min-width:140px;max-width:140px;padding:6px 12px;
+  font-size:10px;font-weight:700;color:var(--c-text-dim);text-transform:uppercase;letter-spacing:.8px;
+  border-right:1px solid var(--c-border);display:flex;align-items:center;
+}
+.ruler-times{display:flex;flex:1;overflow:hidden}
+.ruler-slot{
+  padding:6px 14px;font-size:12px;font-weight:600;color:var(--c-text-dim);
+  border-left:1px solid var(--c-border);white-space:nowrap;
+}
+.ruler-slot.now{color:var(--c-accent)}
+
+/* ====== GRID ====== */
+.guide{position:relative}
+.row{display:flex;border-bottom:1px solid var(--c-border);min-height:64px}
+.row:last-child{border-bottom:none}
+.row-ch{
+  min-width:140px;max-width:140px;
+  padding:10px 12px;display:flex;align-items:center;gap:10px;
+  border-right:1px solid var(--c-border);
+  position:sticky;left:0;z-index:5;background:var(--c-bg);
+}
+.row-ch-num{font-size:20px;font-weight:800;color:var(--c-gold);min-width:28px}
+.row-ch-name{font-size:11px;font-weight:600;color:var(--c-text-secondary);line-height:1.25}
+.row-progs{display:flex;flex:1}
+.cell{
+  padding:8px 14px;border-right:1px solid rgba(51,51,51,.5);
+  display:flex;flex-direction:column;justify-content:center;
+  overflow:hidden;cursor:pointer;position:relative;
+  transition:background .12s;
+}
+.cell:hover{background:var(--c-bg-hover)}
+.cell.on{background:var(--c-accent-dim)}
+.cell.on::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c-accent)}
+.cell-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell.on .cell-title{color:var(--c-accent)}
+.cell-ep{font-size:11px;color:var(--c-text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.cell-foot{display:flex;align-items:center;gap:5px;margin-top:3px}
+.tag{
+  display:inline-block;padding:1px 6px;border-radius:3px;
+  font-size:9px;font-weight:700;color:var(--c-text-secondary);
+  background:var(--c-surface);
+}
+.cell-bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--c-surface-2)}
+.cell-bar-fill{height:100%;background:var(--c-accent)}
+
+/* ====== MOBILE CARDS ====== */
+.mobile{display:none;padding:0 16px 100px}
+.m-section{margin-top:20px}
+.m-ch-bar{
+  display:flex;align-items:center;gap:8px;padding:8px 0;
+  position:sticky;top:var(--hdr-h);z-index:5;background:var(--c-bg);
+  border-bottom:1px solid var(--c-border);
+}
+.m-ch-num{font-size:20px;font-weight:800;color:var(--c-gold)}
+.m-ch-name{font-size:14px;font-weight:700;color:var(--c-text);flex:1}
+.m-card{
+  display:flex;gap:14px;padding:14px 0;
+  border-bottom:1px solid rgba(51,51,51,.4);cursor:pointer;
+}
+.m-card.on{
+  background:var(--c-accent-dim);border-radius:var(--radius);
+  margin:6px -12px;padding:14px 12px;border-bottom:none;
+}
+.m-poster{
+  width:52px;height:76px;border-radius:var(--radius-sm);flex-shrink:0;
+  background:var(--c-surface);object-fit:cover;
+}
+.m-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.m-time{font-size:11px;color:var(--c-text-dim);font-weight:600}
+.m-title{font-size:14px;font-weight:700;margin-top:2px}
+.m-card.on .m-title{color:var(--c-accent)}
+.m-ep{font-size:12px;color:var(--c-text-secondary);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.m-bar{height:3px;background:var(--c-surface-2);border-radius:3px;margin-top:6px}
+.m-bar-fill{height:100%;background:var(--c-accent);border-radius:3px}
+
+/* ====== UP NEXT VIEW ====== */
+.upnext-view{display:none;padding:20px;max-width:1200px;margin:0 auto}
+.upnext-view.active{display:block}
+.un-card{
+  background:var(--c-bg-raised);border:1px solid var(--c-border);border-radius:var(--radius);
+  padding:16px 20px;margin-bottom:12px;transition:border-color .2s;
+}
+.un-card:hover{border-color:var(--c-border-light)}
+.un-ch{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--c-border)}
+.un-ch-num{font-size:22px;font-weight:800;color:var(--c-gold)}
+.un-ch-name{font-size:14px;font-weight:700;color:var(--c-text);flex:1}
+.un-row{display:flex;gap:16px;align-items:stretch}
+.un-now,.un-next{flex:1;padding:12px;border-radius:var(--radius-sm);cursor:pointer}
+.un-now{background:var(--c-accent-dim);border-left:3px solid var(--c-accent)}
+.un-next{background:var(--c-surface);border-left:3px solid var(--c-text-dim)}
+.un-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.un-now .un-label{color:var(--c-accent)}
+.un-next .un-label{color:var(--c-text-dim)}
+.un-title{font-size:15px;font-weight:700}
+.un-now .un-title{color:var(--c-accent)}
+.un-ep{font-size:12px;color:var(--c-text-secondary);margin-top:2px}
+.un-time{font-size:11px;color:var(--c-text-dim);margin-top:4px}
+.un-bar{height:3px;background:var(--c-surface-2);border-radius:3px;margin-top:8px;overflow:hidden}
+.un-bar-fill{height:100%;background:var(--c-accent);border-radius:3px}
+.un-arrow{display:flex;align-items:center;color:var(--c-text-dim);font-size:20px;padding:0 4px}
+
+/* ====== TONIGHT VIEW ====== */
+.tonight-view{display:none;padding:20px;max-width:1200px;margin:0 auto}
+.tonight-view.active{display:block}
+.tn-header{font-size:20px;font-weight:800;margin-bottom:16px;color:var(--c-gold)}
+.tn-header span{color:var(--c-text-secondary);font-size:14px;font-weight:600}
+.tn-ch{margin-bottom:20px}
+.tn-ch-bar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.tn-ch-num{font-size:18px;font-weight:800;color:var(--c-gold)}
+.tn-ch-name{font-size:13px;font-weight:700;color:var(--c-text)}
+.tn-shows{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.tn-shows::-webkit-scrollbar{display:none}
+.tn-show{
+  flex-shrink:0;width:200px;padding:12px;
+  background:var(--c-bg-raised);border:1px solid var(--c-border);border-radius:var(--radius);
+  cursor:pointer;transition:all .2s;
+}
+.tn-show:hover{border-color:var(--c-accent);background:var(--c-bg-hover)}
+.tn-show.on{background:var(--c-accent-dim);border-color:var(--c-accent)}
+.tn-stime{font-size:11px;color:var(--c-text-dim);font-weight:600}
+.tn-stitle{font-size:13px;font-weight:700;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tn-show.on .tn-stitle{color:var(--c-accent)}
+.tn-sep{font-size:11px;color:var(--c-text-secondary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tn-smeta{display:flex;gap:4px;margin-top:6px}
+
+/* ====== DETAIL MODAL ====== */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;backdrop-filter:blur(3px)}
+.overlay.open{display:block}
+.detail{
+  position:fixed;z-index:210;
+  background:var(--c-bg-raised);border:1px solid var(--c-border);
+  overflow:hidden;overflow-y:auto;
+  transition:transform .22s ease,opacity .22s ease;
+}
+.detail.desktop{
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  width:480px;max-width:92vw;max-height:88dvh;border-radius:14px;
+  box-shadow:0 20px 60px rgba(0,0,0,.7);
+}
+.detail.phone{
+  bottom:0;left:0;right:0;max-height:90dvh;
+  border-radius:14px 14px 0 0;
+  box-shadow:0 -10px 40px rgba(0,0,0,.5);
+}
+.detail.out{opacity:0;pointer-events:none}
+.detail.desktop.out{transform:translate(-50%,-46%)}
+.detail.phone.out{transform:translateY(100%)}
+.det-hero{position:relative;height:160px;background:var(--c-surface);overflow:hidden}
+.det-hero img{width:100%;height:100%;object-fit:cover;opacity:.55}
+.det-hero-grad{position:absolute;inset:0;background:linear-gradient(0deg,var(--c-bg-raised) 5%,transparent 60%)}
+.det-x{
+  position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;
+  background:rgba(0,0,0,.6);border:none;color:#fff;font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.det-body{padding:18px 20px 24px}
+.det-title{font-size:20px;font-weight:800;line-height:1.2}
+.det-sub{font-size:13px;color:var(--c-accent);margin-top:3px;font-weight:600}
+.det-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.det-badge{
+  padding:4px 10px;border-radius:var(--radius-sm);font-size:11px;font-weight:700;
+  background:var(--c-surface);color:var(--c-text-secondary);
+}
+.det-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.det-tag{
+  padding:3px 10px;border-radius:14px;font-size:11px;font-weight:600;
+  background:var(--c-surface-2);color:var(--c-text-secondary);
+}
+.det-time-box{
+  margin-top:14px;padding:12px;background:var(--c-surface);border-radius:var(--radius);
+}
+.det-time-row{display:flex;justify-content:space-between;font-size:13px;color:var(--c-text-secondary);padding:3px 0}
+.det-time-row strong{color:var(--c-text)}
+.det-bar{height:5px;background:var(--c-surface-2);border-radius:5px;margin-top:8px;overflow:hidden}
+.det-bar-fill{height:100%;background:var(--c-accent);border-radius:5px}
+.det-btns{display:flex;gap:8px;margin-top:14px}
+.det-watch{
+  flex:1;padding:12px;
+  background:var(--c-accent);color:#fff;font-size:14px;font-weight:700;
+  border:none;border-radius:var(--radius);cursor:pointer;text-align:center;
+  transition:opacity .15s;
+}
+.det-watch:hover{opacity:.85}
+.det-tune{
+  flex:1;padding:12px;
+  background:var(--c-surface);color:var(--c-text);font-size:14px;font-weight:700;
+  border:1px solid var(--c-border);border-radius:var(--radius);cursor:pointer;text-align:center;
+  transition:all .15s;
+}
+.det-tune:hover{background:var(--c-bg-hover)}
+
+/* ====== REMOTE PANEL ====== */
+.remote-panel{
+  position:fixed;top:var(--hdr-h);right:0;bottom:0;width:280px;z-index:120;
+  background:var(--c-bg-raised);border-left:1px solid var(--c-border);
+  transform:translateX(100%);transition:transform .25s ease;
+  overflow-y:auto;
+  box-shadow:-4px 0 20px rgba(0,0,0,.4);
+}
+.remote-panel.open{transform:translateX(0)}
+.rm-header{
+  padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--c-border);
+}
+.rm-header-title{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+.rm-close{
+  width:28px;height:28px;border-radius:50%;border:1px solid var(--c-border);
+  background:transparent;color:var(--c-text-secondary);font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.rm-close:hover{background:var(--c-bg-hover);color:var(--c-text)}
+.rm-status{padding:16px 20px;text-align:center;border-bottom:1px solid var(--c-border)}
+.rm-ch-big{font-size:40px;font-weight:800;color:var(--c-gold)}
+.rm-ch-name{font-size:14px;color:var(--c-text-secondary);margin-top:2px}
+.rm-state{
+  display:inline-flex;align-items:center;gap:6px;
+  margin-top:8px;padding:4px 12px;border-radius:12px;
+  font-size:11px;font-weight:700;
+}
+.rm-state.playing{background:rgba(67,160,71,.15);color:var(--c-green)}
+.rm-state.paused{background:rgba(255,193,7,.15);color:var(--c-gold)}
+.rm-state-dot{width:6px;height:6px;border-radius:50%}
+.rm-state.playing .rm-state-dot{background:var(--c-green)}
+.rm-state.paused .rm-state-dot{background:var(--c-gold)}
+.rm-section{padding:12px 20px}
+.rm-section-title{font-size:10px;font-weight:700;color:var(--c-text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.rm-channels{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rm-ch-btn{
+  padding:10px 4px;border-radius:var(--radius-sm);border:1px solid var(--c-border);
+  background:transparent;color:var(--c-text);font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .15s;text-align:center;
+}
+.rm-ch-btn:hover{background:var(--c-bg-hover);border-color:var(--c-border-light)}
+.rm-ch-btn.active{background:var(--c-accent);color:#fff;border-color:var(--c-accent)}
+.rm-ch-btn .rm-btn-name{font-size:9px;color:var(--c-text-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rm-ch-btn.active .rm-btn-name{color:rgba(255,255,255,.7)}
+.rm-transport{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rm-t-btn{
+  padding:12px 4px;border-radius:var(--radius-sm);border:1px solid var(--c-border);
+  background:transparent;color:var(--c-text-secondary);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .15s;text-align:center;
+}
+.rm-t-btn:hover{background:var(--c-bg-hover);color:var(--c-text)}
+.rm-t-btn.active-state{background:rgba(233,69,96,.15);color:var(--c-live);border-color:var(--c-live)}
+.rm-t-btn .rm-t-icon{font-size:18px;display:block;margin-bottom:2px}
+
+/* ====== WATCH PLAYER ====== */
+.watch{
+  display:none;position:fixed;inset:0;z-index:300;
+  background:#000;flex-direction:column;
+}
+.watch.open{display:flex}
+.w-top{
+  position:absolute;top:0;left:0;right:0;z-index:5;
+  padding:12px 20px;
+  background:linear-gradient(180deg,rgba(0,0,0,.85) 0%,transparent 100%);
+  display:flex;align-items:center;justify-content:space-between;
+  transition:opacity .3s;
+}
+.w-top.hide{opacity:0;pointer-events:none}
+.w-ch-info{display:flex;align-items:center;gap:12px}
+.w-ch-num{font-size:24px;font-weight:900;color:var(--c-gold)}
+.w-ch-name{font-size:16px;font-weight:700;color:#fff}
+.w-close{
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  color:#fff;font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+}
+.w-close:hover{background:rgba(255,255,255,.2)}
+.w-video-wrap{flex:1;position:relative;min-height:0}
+.w-video{width:100%;height:100%;object-fit:contain;background:#000}
+.w-loading{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  color:var(--c-text-dim);font-size:14px;font-weight:600;
+}
+.w-bottom{
+  position:absolute;bottom:0;left:0;right:0;z-index:5;
+  background:linear-gradient(0deg,rgba(0,0,0,.9) 0%,transparent 100%);
+  padding:16px 20px 0;
+  transition:opacity .3s;
+}
+.w-bottom.hide{opacity:0;pointer-events:none}
+.w-now{padding-bottom:12px}
+.w-now-title{font-size:16px;font-weight:700;color:#fff}
+.w-now-sub{font-size:12px;color:var(--c-text-secondary);margin-top:2px}
+.w-now-bar{height:3px;background:rgba(255,255,255,.15);border-radius:3px;margin-top:8px;overflow:hidden}
+.w-now-bar-fill{height:100%;background:var(--c-accent);border-radius:3px}
+.w-channels{
+  display:flex;gap:6px;padding:12px 0;overflow-x:auto;scrollbar-width:none;
+  border-top:1px solid rgba(255,255,255,.1);
+}
+.w-channels::-webkit-scrollbar{display:none}
+.w-ch-btn{
+  flex-shrink:0;padding:8px 14px;border-radius:var(--radius);
+  border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);
+  color:var(--c-text-secondary);font-size:12px;font-weight:700;
+  cursor:pointer;transition:all .15s;text-align:center;min-width:80px;
+}
+.w-ch-btn:hover{background:rgba(255,255,255,.12);color:#fff}
+.w-ch-btn.active{background:var(--c-accent);color:#fff;border-color:var(--c-accent)}
+.w-ch-btn-num{font-size:16px;font-weight:800;display:block}
+.w-ch-btn-name{font-size:9px;margin-top:2px;opacity:.7}
+
+/* ====== PREVUE ====== */
+.prevue{
+  display:none;position:fixed;inset:0;z-index:150;
+  background:#000;flex-direction:column;
+}
+.prevue.open{display:flex}
+/* ====== PREVUE — Authentic Prevue Channel (1993) ====== */
+.pv-top{
+  padding:6px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:linear-gradient(180deg,#001860 0%,#000c30 100%);
+  border-bottom:3px solid;
+  border-image:linear-gradient(90deg,#1030a0,#4878bb,#1030a0) 1;
+  flex-shrink:0;
+}
+.pv-brand{
+  font-family:'Courier New',Courier,monospace;
+  font-size:20px;font-weight:900;color:var(--pv-gold);letter-spacing:3px;
+  text-shadow:2px 2px 0 #805800,0 0 12px rgba(255,200,0,.3);
+}
+.pv-date{font-family:'Courier New',Courier,monospace;font-size:12px;color:var(--pv-date);font-weight:700}
+.pv-clock{font-family:'Courier New',Courier,monospace;font-size:18px;font-weight:700;color:var(--pv-gold);font-variant-numeric:tabular-nums;
+  text-shadow:1px 1px 0 #805800}
+.pv-mute-btn{
+  padding:4px 10px;border-radius:2px;
+  background:linear-gradient(180deg,#304890,#1a2860);
+  border:1px solid #4878bb;border-bottom-color:#0a1430;border-right-color:#0a1430;
+  color:var(--pv-gold);font-size:16px;cursor:pointer;transition:all .15s;
+}
+.pv-mute-btn:hover{background:linear-gradient(180deg,#4060b0,#203070)}
+.pv-mute-btn.muted{color:var(--pv-dim)}
+.pv-exit{
+  padding:4px 12px;border-radius:2px;
+  background:linear-gradient(180deg,#304890,#1a2860);
+  border:1px solid #4878bb;border-bottom-color:#0a1430;border-right-color:#0a1430;
+  color:var(--pv-sub);font-size:11px;font-weight:700;cursor:pointer;
+  font-family:'Courier New',Courier,monospace;
+}
+/* --- Preview area --- */
+.pv-preview{
+  flex:1;position:relative;background:#000;
+  display:flex;align-items:center;justify-content:center;
+  min-height:0;overflow:hidden;
+}
+.pv-video{width:100%;height:100%;object-fit:contain;background:#000;position:absolute;inset:0}
+.pv-video.hidden{opacity:0;pointer-events:none}
+.pv-preview-info{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:14px 20px;
+  background:linear-gradient(0deg,rgba(0,8,32,.95) 0%,rgba(0,8,32,.7) 50%,transparent 100%);
+  pointer-events:none;z-index:2;font-family:'Courier New',Courier,monospace;
+}
+.pv-preview-ch{font-size:11px;font-weight:700;color:var(--pv-gold);text-transform:uppercase;letter-spacing:2px}
+.pv-preview-title{font-size:18px;font-weight:900;color:#fff;margin-top:4px;text-shadow:1px 1px 0 rgba(0,0,0,.8)}
+.pv-preview-sub{font-size:12px;color:var(--pv-sub);margin-top:3px}
+.pv-preview-meta{display:flex;gap:8px;margin-top:8px;align-items:center}
+.pv-preview-badge{
+  padding:2px 8px;font-size:10px;font-weight:700;color:var(--pv-gold);
+  background:linear-gradient(180deg,#203060,#0a1430);
+  border:1px solid #4878bb;border-bottom-color:#0a1430;border-right-color:#0a1430;
+}
+.pv-preview-bar{width:200px;height:4px;background:#0a1430;border:1px inset #203060;overflow:hidden}
+.pv-preview-bar-fill{height:100%;background:linear-gradient(180deg,#ffd040,#c89800)}
+.pv-loading{color:var(--pv-gold);font-size:13px;font-weight:700;position:absolute;z-index:1;
+  font-family:'Courier New',Courier,monospace;text-shadow:0 0 8px rgba(255,200,0,.3)}
+/* --- Channel change banner --- */
+.pv-banner{
+  position:absolute;bottom:80px;left:0;z-index:5;
+  background:linear-gradient(180deg,#001860,#000c30);
+  border:2px solid;border-color:#4878bb #0a1430 #0a1430 #4878bb;
+  border-right:none;border-radius:0 6px 6px 0;
+  padding:14px 24px 14px 16px;min-width:260px;max-width:90%;
+  transform:translateX(-120%);opacity:0;
+  transition:transform .4s cubic-bezier(.22,1,.36,1),opacity .3s ease;
+  font-family:'Courier New',Courier,monospace;
+  box-shadow:4px 4px 16px rgba(0,0,0,.6);
+}
+.pv-banner.show{transform:translateX(0);opacity:1}
+.pv-banner-ch{font-size:28px;font-weight:900;color:var(--pv-gold);line-height:1;
+  text-shadow:2px 2px 0 #805800}
+.pv-banner-name{font-size:12px;color:var(--pv-blue);font-weight:700;margin-top:2px;text-transform:uppercase;letter-spacing:1px}
+.pv-banner-show{font-size:16px;font-weight:700;color:#fff;margin-top:8px;text-shadow:1px 1px 0 rgba(0,0,0,.6)}
+.pv-banner-ep{font-size:11px;color:var(--pv-sub);margin-top:3px}
+.pv-banner-bar{height:4px;background:#0a1430;border:1px inset #203060;margin-top:8px;overflow:hidden}
+.pv-banner-bar-fill{height:100%;background:linear-gradient(180deg,#ffd040,#c89800)}
+/* --- Guide grid section --- */
+.pv-guide{
+  flex-shrink:0;height:40%;min-height:160px;max-height:340px;
+  display:flex;flex-direction:column;
+  border-top:3px solid;
+  border-image:linear-gradient(90deg,#1030a0,#4878bb,#1030a0) 1;
+  background:linear-gradient(180deg,#000c30 0%,#000418 100%);
+  font-family:'Courier New',Courier,monospace;
+}
+/* --- NOW bar --- */
+.pv-now{
+  padding:5px 16px;display:flex;align-items:center;gap:10px;
+  background:linear-gradient(180deg,#001050,#000830);
+  border-bottom:2px solid;
+  border-image:linear-gradient(90deg,transparent,#4878bb,transparent) 1;
+  flex-shrink:0;
+}
+.pv-now-badge{
+  background:linear-gradient(180deg,#e00,#a00);color:#fff;font-size:10px;font-weight:900;
+  padding:2px 10px;letter-spacing:1px;
+  border:1px solid;border-color:#ff4040 #800 #800 #ff4040;
+  animation:pulse 1.4s infinite;
+}
+.pv-now-text{font-size:13px;color:#fff;font-weight:700}
+.pv-now-ch{color:var(--pv-gold);font-weight:900}
+/* --- Time ruler --- */
+.pv-ruler{
+  display:flex;flex-shrink:0;
+  background:linear-gradient(180deg,#182870,#0c1840);
+  border-bottom:2px solid;
+  border-image:linear-gradient(90deg,transparent,#4878bb,transparent) 1;
+}
+.pv-ruler-ch{
+  min-width:140px;max-width:140px;padding:4px 10px;
+  font-size:10px;font-weight:700;color:var(--pv-blue);text-transform:uppercase;letter-spacing:1px;
+  border-right:2px solid #1a3070;display:flex;align-items:center;
+}
+.pv-ruler-times{display:flex;flex:1;overflow:hidden}
+.pv-ruler-slot{
+  padding:4px 12px;font-size:12px;font-weight:700;color:var(--pv-blue);
+  border-left:2px solid #1a3070;white-space:nowrap;
+}
+.pv-ruler-slot.now{color:var(--pv-gold);text-shadow:0 0 6px rgba(255,200,0,.3)}
+/* --- Scrolling area --- */
+.pv-area{flex:1;overflow:hidden;position:relative}
+.pv-scroll{animation:pvUp var(--pv-dur,60s) linear infinite}
+.pv-scroll:hover{animation-play-state:paused}
+@keyframes pvUp{0%{transform:translateY(0)}100%{transform:translateY(var(--pv-dist,-800px))}}
+/* --- Grid rows — embossed Prevue look --- */
+.pv-grid-row{
+  display:flex;min-height:52px;
+  border-bottom:1px solid #0a1430;
+  border-top:1px solid rgba(72,120,187,.12);
+  transition:background .3s;
+}
+.pv-grid-row:nth-child(odd){background:rgba(0,12,48,.6)}
+.pv-grid-row:nth-child(even){background:rgba(0,16,64,.35)}
+.pv-grid-row.active{background:rgba(48,96,208,.25);box-shadow:inset 0 0 20px rgba(72,120,187,.1)}
+/* --- Channel column — prominent --- */
+.pv-grid-ch{
+  min-width:140px;max-width:140px;padding:4px 8px;
+  display:flex;align-items:center;gap:5px;
+  border-right:2px solid #1a3070;flex-shrink:0;
+  background:linear-gradient(90deg,rgba(24,40,112,.4),rgba(16,32,80,.2));
+}
+.pv-num{font-size:22px;font-weight:900;color:var(--pv-gold);min-width:32px;
+  text-shadow:1px 1px 0 #805800}
+.pv-name{font-size:9px;color:var(--pv-blue);font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+/* --- Programme cells — beveled --- */
+.pv-grid-progs{display:flex;flex:1;min-width:0}
+.pv-grid-cell{
+  padding:5px 10px;
+  border-right:1px solid #0a1430;
+  border-left:1px solid rgba(72,120,187,.08);
+  display:flex;flex-direction:column;justify-content:center;
+  overflow:hidden;cursor:pointer;position:relative;transition:background .12s;
+}
+.pv-grid-cell:hover{background:rgba(48,96,208,.2)}
+.pv-grid-cell.on{background:rgba(255,200,0,.06)}
+.pv-grid-cell.on::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,#ffd040,#c89800)}
+.pv-stitle{font-size:13px;color:#dde8ff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv-grid-cell.on .pv-stitle{color:var(--pv-gold);text-shadow:0 0 4px rgba(255,200,0,.2)}
+.pv-sep{font-size:10px;color:var(--pv-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.pv-cell-bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:#0a1430}
+.pv-cell-bar-fill{height:100%;background:linear-gradient(90deg,#ffd040,#c89800)}
+.pv-grid-meta{display:flex;gap:4px;margin-top:2px;align-items:center}
+.pv-srating{font-size:8px;color:var(--pv-dim);background:var(--pv-rating-bg);padding:1px 5px;border-radius:2px}
+.pv-sdur{font-size:8px;color:var(--pv-dim)}
+
+/* ====== RESPONSIVE ====== */
+@media(max-width:840px){
+  .now-strip,.ruler,.guide{display:none}
+  .mobile{display:block}
+  .hdr-search{max-width:none;flex:1}
+  .detail.desktop{display:none}
+  .detail.phone{display:block}
+  .remote-panel{width:100%;top:0;border-left:none;border-radius:0}
+  .un-row{flex-direction:column}
+  .un-arrow{transform:rotate(90deg);justify-content:center}
+  /* Prevue mobile */
+  .pv-guide{height:35%;min-height:140px;max-height:260px}
+  .pv-ruler-ch,.pv-grid-ch{min-width:100px;max-width:100px}
+  .pv-num{min-width:24px;font-size:16px}
+  .pv-name{font-size:8px}
+  .pv-grid-row{min-height:44px}
+  .pv-stitle{font-size:11px}
+  .pv-preview-title{font-size:15px}
+  .pv-preview-sub{font-size:11px}
+  .pv-banner{min-width:200px;padding:10px 16px;bottom:60px}
+  .pv-banner-ch{font-size:22px}
+  .pv-banner-show{font-size:13px}
+}
+@media(min-width:841px){
+  .mobile{display:none!important}
+  .detail.phone{display:none}
+  .detail.desktop{display:block}
+}
+@media(max-width:480px){
+  .hdr{padding:0 10px;height:48px;gap:6px}
+  .hdr-logo{font-size:14px}
+  .hdr-clock{font-size:12px}
+  .btn-pill{height:28px;padding:0 8px;font-size:10px}
+  .btn-icon{width:28px;height:28px;font-size:12px}
+  .m-ch-bar{top:48px}
+  .mobile{padding:0 12px 80px}
+  .upnext-view,.tonight-view{padding:12px}
+  .tn-show{width:160px}
+  .pv-top{padding:5px 10px}
+  .pv-brand{font-size:15px;letter-spacing:1px}
+  .pv-now{padding:3px 10px}
+  .pv-now-text{font-size:11px}
+  .pv-guide{height:30%;min-height:120px;max-height:220px}
+  .pv-ruler-ch,.pv-grid-ch{min-width:80px;max-width:80px}
+  .pv-name{display:none}
+  .pv-num{min-width:22px;font-size:14px}
+  .pv-grid-row{min-height:38px}
+  .pv-stitle{font-size:10px}
+  .pv-sep{font-size:8px}
+  .pv-ruler-slot{font-size:10px;padding:3px 8px}
+  .w-ch-btn{padding:6px 10px;min-width:64px}
+  .w-ch-btn-num{font-size:14px}
+}
+@media(min-width:1400px){
+  .hdr{padding:0 32px}
+  .now-strip{padding:14px 32px}
+  .row-ch,.ruler-ch{min-width:180px;max-width:180px}
+}
+
+/* ====== TICKER ====== */
+.ticker{
+  position:fixed;bottom:0;left:0;right:0;height:36px;z-index:310;
+  overflow:hidden;display:none;align-items:center;
+}
+.ticker.active{display:flex}
+.ticker-prevue{
+  background:linear-gradient(180deg,#001860,#000c30);
+  border-top:3px solid;
+  border-image:linear-gradient(90deg,#c89800,#ffd040,#c89800) 1;
+  color:var(--pv-gold);font-family:'Courier New',Courier,monospace;
+}
+.ticker-watch{
+  background:rgba(0,0,0,.75);
+  backdrop-filter:blur(12px);
+  border-top:1px solid rgba(255,255,255,.1);
+  color:#ececec;
+}
+.ticker-track{
+  display:inline-flex;white-space:nowrap;
+  animation:tickerScroll var(--ticker-dur,60s) linear infinite;
+}
+.ticker-track:hover{animation-play-state:paused}
+@keyframes tickerScroll{
+  0%{transform:translateX(0)}
+  100%{transform:translateX(-50%)}
+}
+.ticker-seg{
+  display:inline-flex;align-items:center;padding:0 24px;
+  font-size:13px;font-weight:600;height:36px;gap:6px;
+}
+.ticker-seg-divider{
+  display:inline-flex;align-items:center;padding:0 8px;
+  font-size:13px;opacity:.4;height:36px;
+}
+.ticker-weather-icon{font-size:16px}
+.ticker-prevue .ticker-seg-divider{color:var(--pv-gold)}
+.ticker-watch .ticker-seg-divider{color:#999}
+.ticker-ch-num{font-weight:800;opacity:.7;margin-right:4px}
+.ticker-msg{font-style:italic;opacity:.85}
+.has-ticker .pv-guide{margin-bottom:36px}
+.has-ticker .w-bottom{margin-bottom:36px}
+
+/* ====== MOBILE BOTTOM NAV ====== */
+.mob-nav{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:rgba(15,15,15,.95);backdrop-filter:blur(16px);
+  border-top:1px solid var(--c-border);
+  padding:4px 0 env(safe-area-inset-bottom,4px);
+}
+.mob-nav-row{display:flex;justify-content:space-around;align-items:center}
+.mob-nav-btn{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:6px 8px;background:none;border:none;color:var(--c-text-dim);
+  font-size:9px;font-weight:600;cursor:pointer;min-width:52px;
+}
+.mob-nav-btn .mob-nav-icon{font-size:18px;line-height:1}
+.mob-nav-btn.active{color:var(--c-accent)}
+.mob-nav-btn.active .mob-nav-icon{color:var(--c-accent)}
+.mob-tools{
+  display:none;position:fixed;bottom:60px;right:8px;z-index:201;
+  background:var(--c-bg-raised);border:1px solid var(--c-border);border-radius:var(--radius);
+  padding:8px;flex-direction:column;gap:6px;box-shadow:0 8px 32px rgba(0,0,0,.5);
+}
+.mob-tools.open{display:flex}
+.mob-tools button{
+  display:flex;align-items:center;gap:8px;padding:10px 14px;
+  background:none;border:none;color:var(--c-text);font-size:13px;
+  cursor:pointer;border-radius:var(--radius-sm);white-space:nowrap;
+}
+.mob-tools button:hover{background:var(--c-bg-hover)}
+.mob-tools-icon{font-size:16px;width:22px;text-align:center}
+@media(max-width:840px){
+  .mob-nav{display:block}
+  .hdr-right .btn-pill[data-v]{display:none}
+  .hdr-right #favs-filter{display:none}
+  .hdr-right .cat-filter-btn{display:none}
+  .hdr-right .btn-icon[onclick*="shiftTime"]{display:none}
+  .hdr-right #remote-toggle{display:none}
+  .hdr-right .bell-wrapper{display:none}
+  .hdr-right #theme-toggle{display:none}
+  .hdr-right .hdr-clock{display:none}
+  body{padding-bottom:56px}
+  .has-ticker .mob-nav{bottom:36px}
+  .mobile{padding-bottom:70px}
+}
+
+/* ====== MOBILE WATCH ENHANCEMENTS ====== */
+.w-mobile-controls{
+  display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:6;gap:32px;align-items:center;
+  opacity:1;transition:opacity .3s;pointer-events:auto;
+}
+.w-mobile-controls.hide{opacity:0;pointer-events:none}
+.w-mobile-ctrl{
+  width:56px;height:56px;border-radius:50%;border:none;
+  background:rgba(0,0,0,.5);backdrop-filter:blur(8px);
+  color:#fff;font-size:22px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.w-mobile-ctrl.big{width:72px;height:72px;font-size:28px}
+.w-mobile-ctrl:active{background:rgba(255,255,255,.2)}
+.w-fs-btn{
+  position:absolute;top:12px;right:60px;z-index:6;
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  color:#fff;font-size:16px;cursor:pointer;
+  display:none;align-items:center;justify-content:center;
+}
+.w-swipe-hint{
+  position:absolute;bottom:50%;left:50%;transform:translateX(-50%);
+  color:rgba(255,255,255,.4);font-size:11px;pointer-events:none;
+  opacity:0;transition:opacity .5s;
+}
+@media(max-width:840px){
+  .w-mobile-controls{display:flex}
+  .w-fs-btn{display:flex}
+  .w-ch-btn{padding:6px 8px;min-width:56px}
+  .w-ch-btn .ch-logo{width:20px;height:20px}
+  .w-ch-btn-name{display:none}
+  .w-bottom{padding:10px 12px 0}
+  .w-top{padding:8px 12px}
+  .w-ch-num{font-size:20px}
+  .w-ch-name{font-size:14px}
+}
+@media(max-width:480px){
+  .w-mobile-ctrl{width:44px;height:44px;font-size:18px}
+  .w-mobile-ctrl.big{width:60px;height:60px;font-size:24px}
+  .w-mobile-controls{gap:24px}
+}
+
+/* ====== MINI-GUIDE OVERLAY ====== */
+.mini-guide{
+  position:absolute;bottom:0;left:0;right:0;z-index:10;
+  background:rgba(0,0,0,.92);backdrop-filter:blur(10px);
+  border-top:1px solid rgba(255,255,255,.1);
+  transform:translateY(100%);transition:transform .3s ease;
+  max-height:40vh;overflow-y:auto;
+}
+.mini-guide.open{transform:translateY(0)}
+.mg-row{
+  display:flex;align-items:center;padding:8px 16px;
+  border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;
+}
+.mg-row:hover{background:rgba(255,255,255,.05)}
+.mg-row.active{background:rgba(59,158,255,.15)}
+.mg-num{font-size:16px;font-weight:800;color:var(--c-gold);min-width:36px}
+.mg-name{font-size:11px;color:var(--c-text-secondary);min-width:80px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mg-now{flex:1;padding:0 12px}
+.mg-now-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mg-now-time{font-size:10px;color:var(--c-text-dim)}
+.mg-next{flex:1;padding:0 12px;opacity:.5}
+.mg-next-title{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mg-next-time{font-size:10px;color:var(--c-text-dim)}
+
+/* ====== QUAD SPLIT VIEW ====== */
+.quad{
+  display:none;position:fixed;inset:0;z-index:300;
+  background:#000;
+  grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
+}
+.quad.open{display:grid}
+.quad-cell{
+  position:relative;overflow:hidden;border:2px solid #222;
+  cursor:pointer;
+}
+.quad-cell.selected{border-color:var(--c-accent)}
+.quad-video{width:100%;height:100%;object-fit:contain;background:#000}
+.quad-label{
+  position:absolute;top:8px;left:8px;z-index:2;
+  background:rgba(0,0,0,.7);padding:4px 10px;border-radius:var(--radius-sm);
+  font-size:12px;font-weight:700;color:var(--c-gold);
+}
+.quad-now{
+  position:absolute;bottom:0;left:0;right:0;z-index:2;
+  background:linear-gradient(transparent,rgba(0,0,0,.85));
+  padding:8px 12px;font-size:12px;
+  opacity:0;transition:opacity .3s;
+}
+.quad-cell:hover .quad-now{opacity:1}
+.quad-cell.selected .quad-now{opacity:1}
+.quad-close{
+  position:fixed;top:12px;right:12px;z-index:310;
+  width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.2);
+  background:rgba(0,0,0,.6);color:#fff;font-size:18px;
+  display:none;cursor:pointer;align-items:center;justify-content:center;
+}
+.quad.open+.quad-close{display:flex}
+
+/* ====== THEMES ====== */
+body.theme-prevue{
+  --c-bg:#000820;--c-bg-raised:#0a1030;--c-bg-hover:#101848;
+  --c-surface:#0f1640;--c-surface-2:#182050;--c-border:#1a2860;--c-border-light:#2a3870;
+  --c-text:#ffc800;--c-text-secondary:#4878bb;--c-text-dim:#305090;
+  --c-accent:#ffc800;--c-accent-dim:rgba(255,200,0,.1);--c-gold:#ffc800;
+  --font:'Courier New',Courier,monospace;
+}
+body.theme-prevue .hdr{background:rgba(0,8,32,.95)}
+body.theme-prevue .cell{border-right:1px solid rgba(72,120,187,.2)}
+body.theme-prevue .cell.on{border-left:3px solid #ffc800;border-right:1px solid rgba(72,120,187,.2)}
+body.theme-prevue .row{border-bottom:1px solid rgba(72,120,187,.15)}
+body.theme-prevue .row-ch{border-right:1px solid rgba(72,120,187,.2);background:var(--c-bg)}
+
+body.theme-comcast{
+  --c-bg:#0a1628;--c-bg-raised:#0e1e38;--c-bg-hover:#142848;
+  --c-surface:#122040;--c-surface-2:#1a2d50;--c-border:#1a3060;--c-border-light:#2a4070;
+  --c-text:#e8f0ff;--c-text-secondary:#70a0d0;--c-text-dim:#406090;
+  --c-accent:#0080ff;--c-accent-dim:rgba(0,128,255,.12);--c-gold:#00c8ff;
+  --c-green:#00c8ff;
+  --font:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+}
+body.theme-comcast .hdr{background:rgba(10,22,40,.95)}
+body.theme-comcast .now-live{color:#00c8ff}
+body.theme-comcast .now-dot{background:#00c8ff}
+
+body.theme-crt{
+  --c-green:#40ff90;
+}
+body.theme-crt .cell.on .cell-title{color:var(--c-green)}
+
+/* ====== CRT OVERLAY ====== */
+.crt-overlay{display:none}
+body.crt-on .crt-overlay{
+  display:block;position:fixed;inset:0;z-index:9999;pointer-events:none;
+}
+body.crt-on .crt-overlay::before{
+  content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.15) 0px,rgba(0,0,0,.15) 1px,transparent 1px,transparent 2px);
+  background-size:100% 2px;
+}
+body.crt-on .crt-overlay::after{
+  content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.35) 100%);
+  border-radius:12px;
+}
+body.crt-on{animation:crtFlicker .15s infinite}
+body.crt-on *{text-shadow:0 0 2px rgba(100,255,150,.15)}
+@keyframes crtFlicker{0%{opacity:.97}25%{opacity:.99}50%{opacity:.96}75%{opacity:.985}100%{opacity:.98}}
+
+/* ====== FAVORITES ====== */
+.fav-btn{
+  background:none;border:none;cursor:pointer;font-size:16px;
+  color:var(--c-text-dim);transition:color .15s;padding:0 2px;line-height:1;
+}
+.fav-btn:hover{color:var(--c-gold)}
+.fav-btn.starred{color:var(--c-gold)}
+.btn-pill .fav-count{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:16px;height:16px;border-radius:8px;
+  background:var(--c-gold);color:#000;font-size:9px;font-weight:800;
+  margin-left:4px;padding:0 4px;
+}
+
+/* ====== REMINDERS ====== */
+.reminder-btn{
+  background:none;border:none;cursor:pointer;font-size:14px;
+  color:var(--c-text-dim);transition:color .15s;padding:4px 8px;
+  border-radius:var(--radius-sm);
+}
+.reminder-btn:hover{color:var(--c-gold);background:var(--c-surface)}
+.reminder-btn.active{color:var(--c-gold)}
+.cell-reminder{position:absolute;top:4px;right:8px;font-size:11px;color:var(--c-gold)}
+.bell-badge{
+  position:absolute;top:-4px;right:-4px;
+  min-width:14px;height:14px;border-radius:7px;
+  background:var(--c-live);color:#fff;font-size:8px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;padding:0 3px;
+}
+.bell-wrapper{position:relative;display:inline-flex}
+.reminder-dropdown{
+  position:absolute;top:36px;right:0;width:280px;
+  background:var(--c-bg-raised);border:1px solid var(--c-border);
+  border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,.5);
+  z-index:130;display:none;overflow:hidden;
+}
+.reminder-dropdown.open{display:block}
+.reminder-dropdown-header{
+  padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--c-text-dim);border-bottom:1px solid var(--c-border);
+}
+.reminder-dropdown-item{
+  display:flex;align-items:center;gap:8px;padding:10px 14px;
+  border-bottom:1px solid rgba(51,51,51,.3);font-size:12px;
+}
+.reminder-dropdown-item:last-child{border-bottom:none}
+.reminder-dropdown-item .rd-info{flex:1;min-width:0}
+.reminder-dropdown-item .rd-title{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reminder-dropdown-item .rd-time{font-size:11px;color:var(--c-text-dim);margin-top:1px}
+.reminder-dropdown-item .rd-cancel{
+  background:none;border:none;color:var(--c-text-dim);cursor:pointer;font-size:14px;
+  padding:2px 6px;border-radius:4px;
+}
+.reminder-dropdown-item .rd-cancel:hover{color:var(--c-live);background:var(--c-surface)}
+.reminder-empty{padding:16px;text-align:center;color:var(--c-text-dim);font-size:12px}
+
+/* ====== CHANNEL SURFING OSD ====== */
+.osd{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+  z-index:400;background:rgba(0,0,0,.88);backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.12);border-radius:12px;
+  padding:16px 28px;min-width:260px;text-align:center;
+  opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;
+}
+.osd.visible{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.osd-ch-num{font-size:48px;font-weight:900;color:var(--c-gold);line-height:1}
+.osd-ch-name{font-size:16px;font-weight:700;color:#fff;margin-top:4px}
+.osd-show{font-size:13px;color:var(--c-text-secondary);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px}
+.osd-bar{height:3px;background:rgba(255,255,255,.15);border-radius:3px;margin-top:8px;overflow:hidden}
+.osd-bar-fill{height:100%;background:var(--c-accent);border-radius:3px}
+
+/* ====== WEATHERSTAR VIEW ====== */
+/* ====== WEATHER & NEWS — WeatherStar 4000 style ====== */
+.weatherstar{
+  display:none;position:fixed;inset:0;z-index:150;
+  background:linear-gradient(170deg,#001838 0%,#002855 40%,#001830 100%);
+  flex-direction:column;overflow:hidden;
+  font-family:'Courier New',Courier,monospace;
+}
+.weatherstar.open{display:flex}
+.ws-top{
+  padding:8px 24px;display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(180deg,#002050,#001030);
+  border-bottom:3px solid;
+  border-image:linear-gradient(90deg,#cc6600,#ff8c00,#ffaa30,#ff8c00,#cc6600) 1;
+  flex-shrink:0;
+}
+.ws-brand{font-size:16px;font-weight:900;color:#ff8c00;letter-spacing:3px;text-transform:uppercase;
+  text-shadow:1px 1px 0 #804400,0 0 10px rgba(255,140,0,.3)}
+.ws-location{font-size:13px;color:#80c0e0;font-weight:700;letter-spacing:1px}
+.ws-clock{font-size:16px;font-weight:700;color:#ff8c00;font-variant-numeric:tabular-nums;
+  text-shadow:1px 1px 0 #804400}
+.ws-music-btn{
+  padding:4px 10px;border-radius:2px;
+  background:linear-gradient(180deg,#204060,#102030);
+  border:1px solid #3080b0;border-bottom-color:#081828;border-right-color:#081828;
+  color:#ff8c00;font-size:14px;cursor:pointer;transition:all .15s;
+}
+.ws-music-btn:hover{background:linear-gradient(180deg,#306080,#183848)}
+.ws-music-btn.playing{color:#40ff90}
+.ws-track-name{font-size:11px;color:#80c0e0;font-style:italic;opacity:.8}
+.ws-exit{
+  padding:4px 12px;border-radius:2px;
+  background:linear-gradient(180deg,#204060,#102030);
+  border:1px solid #3080b0;border-bottom-color:#081828;border-right-color:#081828;
+  color:#80c0e0;font-size:11px;font-weight:700;cursor:pointer;
+}
+.ws-body{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.ws-screen{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:40px;opacity:0;transform:translateX(60px);
+  transition:opacity .8s ease,transform .8s ease;pointer-events:none;
+}
+.ws-screen.active{opacity:1;transform:translateX(0);pointer-events:auto}
+.ws-screen.exiting{opacity:0;transform:translateX(-60px)}
+/* --- Current conditions --- */
+.ws-temp-big{font-size:100px;font-weight:900;color:#fff;line-height:1;
+  text-shadow:2px 2px 0 rgba(0,0,0,.4),0 0 30px rgba(255,140,0,.15)}
+.ws-condition{font-size:26px;color:#ff8c00;font-weight:700;margin-top:10px;
+  text-shadow:1px 1px 0 #804400}
+.ws-details{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:14px;
+  margin-top:28px;width:100%;max-width:520px;
+}
+.ws-detail-card{
+  background:linear-gradient(180deg,rgba(0,30,60,.6),rgba(0,20,40,.8));
+  border:1px solid;border-color:rgba(128,192,224,.2) rgba(0,16,32,.5) rgba(0,16,32,.5) rgba(128,192,224,.2);
+  padding:14px;text-align:center;
+}
+.ws-detail-label{font-size:11px;color:#80c0e0;text-transform:uppercase;letter-spacing:1px}
+.ws-detail-value{font-size:24px;font-weight:900;color:#fff;margin-top:4px}
+/* --- Section titles --- */
+.ws-section-title{font-size:18px;font-weight:900;color:#ff8c00;margin-bottom:20px;letter-spacing:2px;text-transform:uppercase;
+  text-shadow:1px 1px 0 #804400}
+/* --- Today's forecast --- */
+.ws-today-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:14px;
+  width:100%;max-width:520px;
+}
+.ws-today-card{
+  background:linear-gradient(180deg,rgba(0,30,60,.6),rgba(0,20,40,.8));
+  border:1px solid;border-color:rgba(128,192,224,.2) rgba(0,16,32,.5) rgba(0,16,32,.5) rgba(128,192,224,.2);
+  padding:18px;text-align:center;
+}
+.ws-today-card-label{font-size:11px;color:#80c0e0;text-transform:uppercase;letter-spacing:1px}
+.ws-today-card-value{font-size:28px;font-weight:900;color:#fff;margin-top:6px}
+.ws-today-card-sub{font-size:12px;color:#80c0e0;margin-top:4px}
+/* --- Hourly chart --- */
+.ws-hourly-chart{
+  display:flex;align-items:flex-end;gap:6px;height:200px;
+  width:100%;max-width:720px;padding:0 10px;
+}
+.ws-hourly-bar{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.ws-hourly-bar-fill{
+  width:100%;border-radius:3px 3px 0 0;
+  background:linear-gradient(180deg,#ffaa30,#ff8c00,#cc6600);
+  transition:height .5s ease;min-height:4px;
+}
+.ws-hourly-temp{font-size:11px;font-weight:700;color:#fff}
+.ws-hourly-time{font-size:9px;color:#80c0e0}
+/* --- Daily forecast --- */
+.ws-daily-row{
+  display:flex;gap:10px;width:100%;max-width:720px;
+  justify-content:center;flex-wrap:wrap;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;scrollbar-color:rgba(128,192,224,.3) transparent;
+}
+.ws-daily-row::-webkit-scrollbar{height:6px}
+.ws-daily-row::-webkit-scrollbar-thumb{background:rgba(128,192,224,.3);border-radius:3px}
+.ws-day-card{
+  flex:0 0 auto;min-width:100px;max-width:140px;
+  background:linear-gradient(180deg,rgba(0,30,60,.6),rgba(0,20,40,.8));
+  border:1px solid;border-color:rgba(128,192,224,.2) rgba(0,16,32,.5) rgba(0,16,32,.5) rgba(128,192,224,.2);
+  padding:14px 10px;text-align:center;
+}
+.ws-day-name{font-size:12px;font-weight:900;color:#ff8c00;text-transform:uppercase;letter-spacing:1px}
+.ws-day-icon{font-size:30px;margin:8px 0}
+.ws-day-temps{font-size:15px;color:#fff;font-weight:700}
+.ws-day-temps span{color:#80c0e0;font-weight:400}
+.ws-day-precip{font-size:10px;color:#80c0e0;margin-top:4px}
+/* --- Extended outlook --- */
+.ws-outlook{
+  max-width:620px;text-align:center;line-height:1.9;
+  font-size:18px;color:#fff;
+}
+.ws-outlook em{color:#ff8c00;font-style:normal;font-weight:700}
+/* --- News headlines screen --- */
+.ws-news-list{width:100%;max-width:700px;display:flex;flex-direction:column;gap:8px}
+.ws-news-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:10px 14px;
+  background:linear-gradient(180deg,rgba(0,30,60,.5),rgba(0,20,40,.7));
+  border:1px solid;border-color:rgba(128,192,224,.15) rgba(0,16,32,.4) rgba(0,16,32,.4) rgba(128,192,224,.15);
+}
+.ws-news-source{font-size:10px;font-weight:900;color:#ff8c00;text-transform:uppercase;letter-spacing:1px;
+  min-width:50px;padding-top:2px}
+.ws-news-title{font-size:13px;font-weight:700;color:#fff;line-height:1.4}
+.ws-news-time{font-size:10px;color:#80c0e0;margin-left:auto;white-space:nowrap;padding-top:2px}
+.ws-news-clickable{cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.ws-news-clickable:hover{border-color:rgba(255,140,0,.5);box-shadow:0 0 8px rgba(255,140,0,.25)}
+/* --- News detail screen --- */
+.ws-news-detail{width:100%;max-width:650px;text-align:center}
+.ws-news-detail-title{font-size:20px;font-weight:900;color:#fff;line-height:1.4;margin-bottom:16px}
+.ws-news-detail-source{font-size:12px;color:#ff8c00;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.ws-news-detail-summary{font-size:15px;color:#c0d8e8;line-height:1.8}
+/* --- News nav buttons --- */
+.ws-news-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:18px}
+.ws-news-nav-btn{
+  background:linear-gradient(180deg,rgba(48,128,176,.4),rgba(0,30,60,.6));
+  border:1px solid rgba(128,192,224,.3);color:#80c0e0;
+  padding:6px 18px;font-size:13px;font-weight:700;cursor:pointer;
+  transition:background .2s,color .2s;
+}
+.ws-news-nav-btn:hover{background:rgba(255,140,0,.3);color:#fff;border-color:rgba(255,140,0,.5)}
+.ws-news-counter{font-size:12px;color:#80c0e0;font-weight:600;min-width:50px;text-align:center}
+/* --- Pause indicator --- */
+.ws-pause-indicator{
+  display:none;font-size:11px;font-weight:900;color:#ff8c00;
+  letter-spacing:1px;text-transform:uppercase;
+  animation:wsPauseBlink 1s step-end infinite;
+}
+.ws-pause-indicator.visible{display:inline}
+@keyframes wsPauseBlink{0%,100%{opacity:1}50%{opacity:0}}
+/* --- Bottom news ticker --- */
+.ws-news-bar{
+  flex-shrink:0;height:32px;overflow:hidden;
+  background:linear-gradient(180deg,#001838,#000c20);
+  border-top:2px solid;
+  border-image:linear-gradient(90deg,transparent,#3080b0,transparent) 1;
+  display:flex;align-items:center;
+}
+.ws-news-track{
+  display:inline-flex;white-space:nowrap;
+  animation:wsNewsTick var(--ws-news-dur,90s) linear infinite;
+  font-size:12px;font-weight:600;color:#80c0e0;
+}
+.ws-news-track:hover{animation-play-state:paused}
+@keyframes wsNewsTick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ws-news-seg{display:inline-flex;align-items:center;padding:0 20px;height:32px;gap:8px}
+.ws-news-seg-source{color:#ff8c00;font-weight:900;font-size:10px;text-transform:uppercase;letter-spacing:1px}
+.ws-news-seg-divider{color:#3080b0;padding:0 12px;opacity:.6}
+/* --- Nav dots --- */
+.ws-dots{
+  display:flex;gap:8px;justify-content:center;padding:10px;flex-shrink:0;
+  background:linear-gradient(180deg,#001030,#000820);
+}
+.ws-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:rgba(128,192,224,.2);transition:background .3s;cursor:pointer;
+}
+.ws-dot.active{background:#ff8c00;box-shadow:0 0 6px rgba(255,140,0,.4)}
+
+/* ====== THEME BUTTON ====== */
+.theme-btn-icon{font-size:14px}
+
+/* ====== CHANNEL LOGOS ====== */
+.ch-logo{
+  width:28px;height:28px;border-radius:4px;object-fit:contain;
+  flex-shrink:0;background:var(--c-surface);
+}
+.ch-logo-sm{width:22px;height:22px;border-radius:3px}
+.ch-logo-lg{width:36px;height:36px;border-radius:5px}
+.pv-grid-ch .ch-logo{width:24px;height:24px;border-radius:3px;background:transparent}
+.w-ch-btn .ch-logo{width:18px;height:18px;border-radius:2px;margin:0 auto 2px}
+.rm-ch-btn .ch-logo{width:20px;height:20px;border-radius:3px;margin:0 auto 3px}
+
+/* ====== CATEGORY FILTER ====== */
+.cat-filter-btn{position:relative}
+.cat-dropdown{
+  position:absolute;top:36px;right:0;width:320px;
+  background:var(--c-bg-raised);border:1px solid var(--c-border);
+  border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,.5);
+  z-index:130;display:none;overflow:hidden;
+}
+.cat-dropdown.open{display:block}
+.cat-dropdown-header{
+  padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--c-text-dim);border-bottom:1px solid var(--c-border);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.cat-dropdown-clear{
+  font-size:10px;color:var(--c-accent);cursor:pointer;text-transform:none;
+  letter-spacing:0;font-weight:600;background:none;border:none;padding:0;
+}
+.cat-dropdown-clear:hover{text-decoration:underline}
+.cat-pills{
+  padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px;max-height:260px;overflow-y:auto;
+}
+.cat-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 10px;border-radius:14px;border:1px solid var(--c-border);
+  background:transparent;color:var(--c-text-secondary);font-size:11px;font-weight:600;
+  cursor:pointer;transition:all .15s;
+}
+.cat-pill:hover{background:var(--c-bg-hover);color:var(--c-text)}
+.cat-pill.active{background:var(--c-accent);color:#fff;border-color:var(--c-accent)}
+.cat-pill-count{font-size:9px;opacity:.7}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-logo">PI <span>TV</span> GUIDE</div>
+  <div class="hdr-search">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+    <input id="search" type="text" placeholder="Search shows..." oninput="onSearch(this.value)">
+  </div>
+  <div class="hdr-right">
+    <button class="btn-pill active" data-v="guide" onclick="setView('guide')">Guide</button>
+    <button class="btn-pill" data-v="upnext" onclick="setView('upnext')">Up Next</button>
+    <button class="btn-pill" data-v="tonight" onclick="setView('tonight')">Tonight</button>
+    <button class="btn-pill" data-v="prevue" onclick="setView('prevue')">Prevue</button>
+    <button class="btn-pill" data-v="weather" onclick="setView('weather')">Weather</button>
+    <button class="btn-pill" id="favs-filter" onclick="toggleFavsFilter()">Favs</button>
+    <div class="cat-filter-btn" style="display:inline-flex;position:relative">
+      <button class="btn-pill" id="cat-filter-btn" onclick="toggleCatDropdown()">&#9776; Filter</button>
+      <div class="cat-dropdown" id="cat-dropdown">
+        <div class="cat-dropdown-header">
+          <span>Filter by Genre</span>
+          <button class="cat-dropdown-clear" onclick="clearCatFilter()">Clear all</button>
+        </div>
+        <div class="cat-pills" id="cat-pills"></div>
+      </div>
+    </div>
+    <button class="btn-icon" onclick="shiftTime(-1)" title="Earlier">&#8249;</button>
+    <button class="btn-icon" onclick="shiftTime(0)" title="Now">&#8226;</button>
+    <button class="btn-icon" onclick="shiftTime(1)" title="Later">&#8250;</button>
+    <button class="btn-icon" id="remote-toggle" onclick="toggleRemote()" title="Remote Control">&#9881;</button>
+    <div class="bell-wrapper">
+      <button class="btn-icon" id="bell-btn" onclick="toggleReminderDropdown()" title="Reminders">&#128276;</button>
+      <span class="bell-badge" id="bell-badge" style="display:none">0</span>
+    </div>
+    <button class="btn-icon" id="theme-toggle" onclick="cycleTheme()" title="Change theme (Shift+T)"><span class="theme-btn-icon">&#127912;</span></button>
+    <a class="btn-pill" id="player-link" title="Open Remote Control">Remote</a>
+    <div class="hdr-clock" id="clock"></div>
+  </div>
+</div>
+
+<div class="reminder-dropdown" id="reminder-dropdown">
+  <div class="reminder-dropdown-header">Upcoming Reminders</div>
+  <div id="reminder-list"></div>
+</div>
+
+<div class="now-strip" id="now-strip"></div>
+<div class="ruler" id="ruler">
+  <div class="ruler-ch">Channel</div>
+  <div class="ruler-times" id="ruler-times"></div>
+</div>
+<div class="guide" id="guide"></div>
+<div class="mobile" id="mobile"></div>
+<div class="upnext-view" id="upnext-view"></div>
+<div class="tonight-view" id="tonight-view"></div>
+
+<div class="overlay" id="overlay" onclick="closeDet()"></div>
+<div class="detail desktop out" id="det-desk"></div>
+<div class="detail phone out" id="det-phone"></div>
+
+<!-- Remote Control Panel -->
+<div class="remote-panel" id="remote-panel">
+  <div class="rm-header">
+    <span class="rm-header-title">Remote Control</span>
+    <button class="rm-close" onclick="toggleRemote()">&#10005;</button>
+  </div>
+  <div class="rm-status">
+    <div class="rm-ch-big" id="rm-ch-num">--</div>
+    <div class="rm-ch-name" id="rm-ch-name">Not connected</div>
+    <div class="rm-state playing" id="rm-state">
+      <span class="rm-state-dot"></span>
+      <span id="rm-state-text">Playing</span>
+    </div>
+  </div>
+  <div class="rm-section">
+    <div class="rm-section-title">Channels</div>
+    <div class="rm-channels" id="rm-channels"></div>
+  </div>
+  <div class="rm-section">
+    <div class="rm-section-title">Controls</div>
+    <div class="rm-transport">
+      <button class="rm-t-btn" id="rm-pause" onclick="rCmd('pause')">
+        <span class="rm-t-icon">&#9208;</span>Pause
+      </button>
+      <button class="rm-t-btn" id="rm-mute" onclick="rCmd('mute')">
+        <span class="rm-t-icon">&#128263;</span>Mute
+      </button>
+      <button class="rm-t-btn" onclick="rCmd('refresh')">
+        <span class="rm-t-icon">&#8635;</span>Refresh
+      </button>
+      <button class="rm-t-btn" onclick="rCmd('volume/up')">
+        <span class="rm-t-icon">&#128266;</span>Vol +
+      </button>
+      <button class="rm-t-btn" onclick="rCmd('volume/down')">
+        <span class="rm-t-icon">&#128265;</span>Vol -
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Watch Player -->
+<div class="watch" id="watch">
+  <div class="w-top" id="w-top">
+    <div class="w-ch-info">
+      <span class="w-ch-num" id="w-ch-num"></span>
+      <span class="w-ch-name" id="w-ch-name"></span>
+    </div>
+    <button class="w-fs-btn" id="w-fs-btn" onclick="watchFullscreen()" title="Fullscreen">&#x26F6;</button>
+    <button class="w-close" onclick="watchClose()">&#10005;</button>
+  </div>
+  <div class="w-video-wrap" onclick="watchToggleUI()">
+    <span class="w-loading" id="w-loading">Loading...</span>
+    <video class="w-video" id="w-video" autoplay playsinline></video>
+    <div class="w-mobile-controls" id="w-mobile-controls">
+      <button class="w-mobile-ctrl" onclick="event.stopPropagation();watchPrevCh()">&#9664;</button>
+      <button class="w-mobile-ctrl big" id="w-play-btn" onclick="event.stopPropagation();watchTogglePlay()">&#10074;&#10074;</button>
+      <button class="w-mobile-ctrl" onclick="event.stopPropagation();watchNextCh()">&#9654;</button>
+    </div>
+  </div>
+  <div class="w-bottom" id="w-bottom">
+    <div class="w-now" id="w-now-info"></div>
+    <div class="w-channels" id="w-channels"></div>
+  </div>
+  <div class="mini-guide" id="mini-guide"></div>
+</div>
+
+<!-- Quad Split View -->
+<div class="quad" id="quad">
+  <div class="quad-cell selected" data-slot="0" onclick="quadSelect(0)">
+    <span class="quad-label" id="q-label-0"></span>
+    <video class="quad-video" id="q-video-0" autoplay playsinline muted></video>
+    <div class="quad-now" id="q-now-0"></div>
+  </div>
+  <div class="quad-cell" data-slot="1" onclick="quadSelect(1)">
+    <span class="quad-label" id="q-label-1"></span>
+    <video class="quad-video" id="q-video-1" autoplay playsinline muted></video>
+    <div class="quad-now" id="q-now-1"></div>
+  </div>
+  <div class="quad-cell" data-slot="2" onclick="quadSelect(2)">
+    <span class="quad-label" id="q-label-2"></span>
+    <video class="quad-video" id="q-video-2" autoplay playsinline muted></video>
+    <div class="quad-now" id="q-now-2"></div>
+  </div>
+  <div class="quad-cell" data-slot="3" onclick="quadSelect(3)">
+    <span class="quad-label" id="q-label-3"></span>
+    <video class="quad-video" id="q-video-3" autoplay playsinline muted></video>
+    <div class="quad-now" id="q-now-3"></div>
+  </div>
+</div>
+<button class="quad-close" id="quad-close" onclick="quadClose()">&#10005;</button>
+
+<!-- Prevue Mode -->
+<div class="prevue" id="prevue">
+  <div class="pv-top">
+    <span class="pv-brand">PREVUE GUIDE</span>
+    <span class="pv-date" id="pv-date"></span>
+    <span class="pv-clock" id="pv-clock"></span>
+    <button class="pv-mute-btn" id="pv-mute-btn" onclick="pvToggleMute()" title="Toggle audio">&#128266;</button>
+    <button class="pv-exit" onclick="setView('guide')">ESC</button>
+  </div>
+  <div class="pv-preview">
+    <span class="pv-loading" id="pv-loading">Loading preview...</span>
+    <video class="pv-video" id="pv-video-a" autoplay playsinline></video>
+    <video class="pv-video hidden" id="pv-video-b" muted autoplay playsinline></video>
+    <div class="pv-banner" id="pv-banner">
+      <div class="pv-banner-ch" id="pv-banner-ch"></div>
+      <div class="pv-banner-name" id="pv-banner-name"></div>
+      <div class="pv-banner-show" id="pv-banner-show"></div>
+      <div class="pv-banner-ep" id="pv-banner-ep"></div>
+      <div class="pv-banner-bar"><div class="pv-banner-bar-fill" id="pv-banner-bar"></div></div>
+    </div>
+    <div class="pv-preview-info" id="pv-info"></div>
+  </div>
+  <div class="pv-guide">
+    <div class="pv-now" id="pv-now"></div>
+    <div class="pv-ruler">
+      <div class="pv-ruler-ch">CHANNEL</div>
+      <div class="pv-ruler-times" id="pv-ruler-times"></div>
+    </div>
+    <div class="pv-area"><div class="pv-scroll" id="pv-scroll"></div></div>
+  </div>
+</div>
+
+<!-- WeatherStar View -->
+<div class="weatherstar" id="weatherstar">
+  <div class="ws-top">
+    <span class="ws-brand">WEATHER &amp; NEWS</span>
+    <span class="ws-location" id="ws-location"></span>
+    <span class="ws-clock" id="ws-clock"></span>
+    <button class="ws-music-btn" id="ws-music-btn" onclick="wsToggleMusic()" style="display:none" title="Toggle music">&#9835;</button>
+    <span class="ws-track-name" id="ws-track-name" style="display:none"></span>
+    <span class="ws-pause-indicator" id="ws-pause-indicator">PAUSED</span>
+    <button class="ws-exit" onclick="setView('guide')">ESC</button>
+  </div>
+  <div class="ws-body" id="ws-body">
+    <div class="ws-screen" id="ws-screen-0"></div>
+    <div class="ws-screen" id="ws-screen-1"></div>
+    <div class="ws-screen" id="ws-screen-2"></div>
+    <div class="ws-screen" id="ws-screen-3"></div>
+    <div class="ws-screen" id="ws-screen-4"></div>
+    <div class="ws-screen" id="ws-screen-5"></div>
+    <div class="ws-screen" id="ws-screen-6"></div>
+  </div>
+  <div class="ws-news-bar" id="ws-news-bar">
+    <div class="ws-news-track" id="ws-news-track"></div>
+  </div>
+  <div class="ws-dots" id="ws-dots">
+    <div class="ws-dot active" data-i="0"></div>
+    <div class="ws-dot" data-i="1"></div>
+    <div class="ws-dot" data-i="2"></div>
+    <div class="ws-dot" data-i="3"></div>
+    <div class="ws-dot" data-i="4"></div>
+    <div class="ws-dot" data-i="5"></div>
+    <div class="ws-dot" data-i="6"></div>
+  </div>
+</div>
+<audio id="ws-audio" loop preload="none"></audio>
+
+<!-- Channel Surfing OSD -->
+<div class="osd" id="osd">
+  <div class="osd-ch-num" id="osd-ch-num"></div>
+  <div class="osd-ch-name" id="osd-ch-name"></div>
+  <div class="osd-show" id="osd-show"></div>
+  <div class="osd-bar"><div class="osd-bar-fill" id="osd-bar-fill"></div></div>
+</div>
+
+<!-- CRT Overlay -->
+<div class="crt-overlay"></div>
+
+<!-- Ticker -->
+<div class="ticker" id="ticker"><div class="ticker-track" id="ticker-track"></div></div>
+
+<!-- Mobile Bottom Nav -->
+<nav class="mob-nav" id="mob-nav">
+  <div class="mob-nav-row">
+    <button class="mob-nav-btn active" data-v="guide" onclick="setView('guide')"><span class="mob-nav-icon">&#9776;</span>Guide</button>
+    <button class="mob-nav-btn" data-v="upnext" onclick="setView('upnext')"><span class="mob-nav-icon">&#9654;</span>Up Next</button>
+    <button class="mob-nav-btn" data-v="tonight" onclick="setView('tonight')"><span class="mob-nav-icon">&#9790;</span>Tonight</button>
+    <button class="mob-nav-btn" data-v="prevue" onclick="setView('prevue')"><span class="mob-nav-icon">&#128250;</span>Prevue</button>
+    <button class="mob-nav-btn" data-v="weather" onclick="setView('weather')"><span class="mob-nav-icon">&#9925;</span>Weather</button>
+    <button class="mob-nav-btn" id="mob-tools-btn" onclick="toggleMobTools()"><span class="mob-nav-icon">&#8943;</span>More</button>
+  </div>
+</nav>
+<div class="mob-tools" id="mob-tools">
+  <button onclick="toggleFavsFilter();toggleMobTools()"><span class="mob-tools-icon">&#9733;</span>Favorites</button>
+  <button onclick="toggleCatDropdown();toggleMobTools()"><span class="mob-tools-icon">&#9776;</span>Filter</button>
+  <button onclick="shiftTime(-1);toggleMobTools()"><span class="mob-tools-icon">&#8249;</span>Earlier</button>
+  <button onclick="shiftTime(0);toggleMobTools()"><span class="mob-tools-icon">&#8226;</span>Now</button>
+  <button onclick="shiftTime(1);toggleMobTools()"><span class="mob-tools-icon">&#8250;</span>Later</button>
+  <button onclick="toggleRemote();toggleMobTools()"><span class="mob-tools-icon">&#9881;</span>Remote</button>
+  <button onclick="toggleReminderDropdown();toggleMobTools()"><span class="mob-tools-icon">&#128276;</span>Reminders</button>
+  <button onclick="cycleTheme();toggleMobTools()"><span class="mob-tools-icon">&#127912;</span>Theme</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.min.js"></script>
+<script>
+const ETV='{{ etv_url }}';
+const DEFAULT_THEME='{{ default_theme }}';
+const WS_MUSIC_URL='{{ ws_music_url }}';
+const WS_PLAYLIST=JSON.parse('{{ ws_playlist|safe }}');
+let D=null,tOff=0,search='',currentView='guide';
+const MIN_PPM=3.5;
+const TIME_WINDOW=180;
+function calcPPM(){
+  const chCol=window.innerWidth>=1400?180:140;
+  return Math.max(MIN_PPM,(window.innerWidth-chCol)/TIME_WINDOW);
+}
+let PPM=calcPPM();
+let resizeTimer=null;
+window.addEventListener('resize',()=>{
+  if(resizeTimer)clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(()=>{PPM=calcPPM();if(D){rRuler();rGrid()}},150);
+});
+
+// ====== UTILITIES ======
+function fmt(d){const h=d.getHours()%12||12;return h+':'+String(d.getMinutes()).padStart(2,'0')+' '+(d.getHours()>=12?'PM':'AM')}
+function fmtDate(d){return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}
+function pct(a,b){const n=Date.now()/1e3;return n<a?0:n>b?100:Math.round((n-a)/(b-a)*100)}
+function isOn(p){const n=Date.now()/1e3;return p.start_ts<=n&&p.stop_ts>n}
+function vStart(){const d=new Date;d.setHours(d.getHours()+tOff);d.setMinutes(d.getMinutes()<30?0:30,0,0);return d}
+function vEnd(){return new Date(vStart().getTime()+3*36e5)}
+function cProgs(id){return D.programmes.filter(p=>p.channel_id===id).sort((a,b)=>a.start_ts-b.start_ts)}
+function hit(p){
+  if(!hitCat(p))return false;
+  if(!search)return true;const s=search.toLowerCase();return p.title.toLowerCase().includes(s)||(p.subtitle||'').toLowerCase().includes(s);
+}
+function esc(p){return JSON.stringify(p).replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;')}
+function epName(p){if(!p.subtitle)return'';const parts=p.subtitle.split(' - ');return parts.length>2?parts.slice(2).join(' - '):parts[parts.length-1]}
+function chNum(p){const c=D?D.channels.find(x=>x.id===p.channel_id):null;return c?c.number:'?'}
+
+// ====== VIDEO PLAYER UTILITY ======
+// Uses mpegts.js for MSE-capable browsers (desktop + Android)
+// Falls back to native HLS for Safari (iOS/macOS)
+// Proxy routes (/stream/) available for mobile CORS fallback
+function hlsPlay(vid,chNum,muted){
+  hlsStop(vid);
+  vid.muted=!!muted;
+
+  // Prefer mpegts.js with MPEG-TS stream
+  if(typeof mpegts!=='undefined'&&mpegts.isSupported()){
+    const url=location.origin+'/stream/'+chNum+'.ts';
+    const player=mpegts.createPlayer({type:'mpegts',isLive:true,url:url},{
+      enableWorker:true,
+      liveBufferLatencyChasing:false,
+      liveBufferLatencyMaxLatency:30,
+      liveBufferLatencyMinRemain:8,
+      stashInitialSize:512*1024,
+      enableStashBuffer:true,
+      autoCleanupSourceBuffer:true,
+      autoCleanupMaxBackwardDuration:30,
+      autoCleanupMinBackwardDuration:15,
+    });
+    player.attachMediaElement(vid);
+    player.load();
+    vid.play().catch(()=>{});
+    vid._mpegts=player;
+  }
+  // Fallback: native HLS for Safari (iOS/macOS)
+  else if(vid.canPlayType('application/vnd.apple.mpegurl')){
+    vid.src=location.origin+'/stream/'+chNum+'.m3u8';
+    vid.play().catch(()=>{});
+  }
+}
+function hlsStop(vid){
+  if(vid._mpegts){
+    try{vid._mpegts.pause();vid._mpegts.unload();vid._mpegts.detachMediaElement();vid._mpegts.destroy()}catch(e){}
+    vid._mpegts=null;
+  }
+  vid.removeAttribute('src');
+  vid.load();
+}
+
+// ====== CLOCK ======
+function tick(){
+  const d=new Date,s=fmt(d);
+  document.getElementById('clock').textContent=s;
+  document.getElementById('pv-clock').textContent=s;
+  document.getElementById('pv-date').textContent=fmtDate(d);
+  document.getElementById('ws-clock').textContent=s;
+}
+setInterval(tick,1e3);tick();
+
+// Remote/Player link
+document.getElementById('player-link').href='http://'+location.hostname+':5000';
+
+// ====== DATA LOADING ======
+async function load(){
+  try{
+    const r=await fetch('/api/epg');
+    D=await r.json();
+    render();rRemoteChannels();rWatchChannels();
+  }catch(e){console.warn('EPG refresh failed',e)}
+}
+
+function render(){
+  if(!D)return;
+  rNow();rRuler();rGrid();rMobile();rUpNext();rTonight();rPrevue();
+}
+
+// ====== NOW STRIP ======
+function rNow(){
+  const el=document.getElementById('now-strip'),n=Date.now()/1e3;
+  let h='';
+  for(const c of sortedChannels()){
+    const p=D.programmes.find(x=>x.channel_id===c.id&&x.start_ts<=n&&x.stop_ts>n);
+    if(!p||!hitCat(p))continue;
+    const pr=pct(p.start_ts,p.stop_ts);
+    h+=`<div class="now-card" onclick='showDet(${esc(p)})'>
+      <div class="now-top"><span class="now-ch">${chLogo(c,'ch-logo-sm')} ${favStar(c.id)} ${c.number} &middot; ${c.name}</span>
+      <span class="now-live"><span class="now-dot"></span>LIVE</span></div>
+      <div class="now-title">${p.title}</div>
+      <div class="now-sub">${p.episode||''}${p.episode&&p.rating?' &middot; ':''}${p.rating||''} &middot; ${p.duration_min}m</div>
+      <div class="now-actions"><button class="watch-btn watch-btn-sm" onclick="event.stopPropagation();watchOpen(${c.number})">&#9654; Watch</button></div>
+      <div class="now-bar"><div class="now-bar-fill" style="width:${pr}%"></div></div>
+    </div>`;
+  }
+  el.innerHTML=h;
+}
+
+// ====== TIME RULER ======
+function rRuler(){
+  const el=document.getElementById('ruler-times'),s=vStart(),now=new Date;
+  let h='';
+  for(let i=0;i<6;i++){
+    const t=new Date(s.getTime()+i*18e5);
+    const cur=t<=now&&new Date(t.getTime()+18e5)>now;
+    h+=`<div class="ruler-slot${cur?' now':''}" style="min-width:${30*PPM}px">${fmt(t)}</div>`;
+  }
+  el.innerHTML=h;
+}
+
+// ====== GRID VIEW ======
+function rGrid(){
+  const el=document.getElementById('guide');
+  const vs=vStart().getTime()/1e3,ve=vEnd().getTime()/1e3;
+  let h='';
+  for(const c of sortedChannels()){
+    const ps=cProgs(c.id).filter(p=>p.stop_ts>vs&&p.start_ts<ve);
+    h+=`<div class="row"><div class="row-ch">${chLogo(c)}${favStar(c.id)}<span class="row-ch-num">${c.number}</span><span class="row-ch-name">${c.name}</span></div><div class="row-progs">`;
+    for(const p of ps){
+      if(!hit(p))continue;
+      const a=Math.max(p.start_ts,vs),b=Math.min(p.stop_ts,ve);
+      const w=Math.max((b-a)/60*PPM,80);
+      const on=isOn(p),pr=on?pct(p.start_ts,p.stop_ts):0;
+      const rem=hasReminder(p.channel_id,p.title,p.start_ts);
+      h+=`<div class="cell${on?' on':''}" style="width:${w}px;min-width:${w}px" onclick='showDet(${esc(p)})'>
+        ${rem?'<span class="cell-reminder">\uD83D\uDD14</span>':''}
+        <div class="cell-title">${p.title}</div>
+        <div class="cell-ep">${p.episode||''}</div>
+        <div class="cell-foot">${p.rating?`<span class="tag">${p.rating}</span>`:''}
+        <span class="tag">${p.duration_min}m</span></div>
+        ${on?`<div class="cell-bar"><div class="cell-bar-fill" style="width:${pr}%"></div></div>`:''}</div>`;
+    }
+    h+=`</div></div>`;
+  }
+  el.innerHTML=h;
+}
+
+// ====== MOBILE VIEW ======
+function rMobile(){
+  const el=document.getElementById('mobile'),n=Date.now()/1e3;
+  let h='';
+  for(const c of sortedChannels()){
+    h+=`<div class="m-section"><div class="m-ch-bar">${chLogo(c)}${favStar(c.id)}<span class="m-ch-num">${c.number}</span><span class="m-ch-name">${c.name}</span><button class="watch-btn watch-btn-sm" onclick="watchOpen(${c.number})">&#9654; Watch</button></div>`;
+    const ps=cProgs(c.id).filter(p=>p.stop_ts>n).slice(0,8);
+    for(const p of ps){
+      if(!hit(p))continue;
+      const on=isOn(p),pr=on?pct(p.start_ts,p.stop_ts):0;
+      h+=`<div class="m-card${on?' on':''}" onclick='showDet(${esc(p)})'>
+        ${p.poster?`<img class="m-poster" src="${p.poster}" loading="lazy">`:`<div class="m-poster"></div>`}
+        <div class="m-body">
+          <div class="m-time">${fmt(new Date(p.start_ts*1e3))} - ${fmt(new Date(p.stop_ts*1e3))}</div>
+          <div class="m-title">${p.title}</div>
+          <div class="m-ep">${p.episode?p.episode+' - ':''}${epName(p)}</div>
+          <div class="m-tags">${p.rating?`<span class="tag">${p.rating}</span>`:''}
+          <span class="tag">${p.duration_min}m</span></div>
+          ${on?`<div class="m-bar"><div class="m-bar-fill" style="width:${pr}%"></div></div>`:''}</div></div>`;
+    }
+    h+=`</div>`;
+  }
+  el.innerHTML=h;
+}
+
+// ====== UP NEXT VIEW ======
+function rUpNext(){
+  const el=document.getElementById('upnext-view'),n=Date.now()/1e3;
+  let h='';
+  for(const c of sortedChannels()){
+    const progs=cProgs(c.id).filter(p=>p.stop_ts>n);
+    const now=progs.find(p=>p.start_ts<=n&&p.stop_ts>n);
+    const next=progs.find(p=>p.start_ts>=n)||(now?progs.find(p=>p.start_ts>now.start_ts):null);
+    if(!now)continue;
+    const pr=pct(now.start_ts,now.stop_ts);
+    const nowRem=Math.max(0,Math.round((now.stop_ts-n)/60));
+    h+=`<div class="un-card">
+      <div class="un-ch">${chLogo(c,'ch-logo-lg')}<span class="un-ch-num">${c.number}</span><span class="un-ch-name">${c.name}</span><button class="watch-btn" onclick="watchOpen(${c.number})">&#9654; Watch</button></div>
+      <div class="un-row">
+        <div class="un-now" onclick='showDet(${esc(now)})'>
+          <div class="un-label">Now Playing</div>
+          <div class="un-title">${now.title}</div>
+          <div class="un-ep">${now.episode?now.episode+' - ':''}${epName(now)}</div>
+          <div class="un-time">${fmt(new Date(now.start_ts*1e3))} - ${fmt(new Date(now.stop_ts*1e3))} &middot; ${nowRem}m left</div>
+          <div class="un-bar"><div class="un-bar-fill" style="width:${pr}%"></div></div>
+        </div>
+        <div class="un-arrow">&#9654;</div>`;
+    if(next&&next!==now){
+      h+=`<div class="un-next" onclick='showDet(${esc(next)})'>
+          <div class="un-label">Up Next</div>
+          <div class="un-title">${next.title}</div>
+          <div class="un-ep">${next.episode?next.episode+' - ':''}${epName(next)}</div>
+          <div class="un-time">${fmt(new Date(next.start_ts*1e3))} - ${fmt(new Date(next.stop_ts*1e3))} &middot; ${next.duration_min}m</div>
+        </div>`;
+    } else {
+      h+=`<div class="un-next"><div class="un-label">Up Next</div><div class="un-title" style="color:var(--c-text-dim)">No data</div></div>`;
+    }
+    h+=`</div></div>`;
+  }
+  el.innerHTML=h;
+}
+
+// ====== TONIGHT VIEW ======
+function rTonight(){
+  const el=document.getElementById('tonight-view'),n=Date.now()/1e3;
+  const today=new Date();
+  let primeStart=new Date(today);primeStart.setHours(19,0,0,0);
+  let primeEnd=new Date(today);primeEnd.setHours(23,59,59,0);
+  if(today.getHours()<5){
+    primeStart.setDate(primeStart.getDate()-1);
+    primeEnd.setDate(primeEnd.getDate()-1);
+  }
+  const ps=primeStart.getTime()/1e3,pe=primeEnd.getTime()/1e3;
+  let h=`<div class="tn-header">Tonight <span>${fmt(primeStart)} - ${fmt(primeEnd)}</span></div>`;
+  for(const c of sortedChannels()){
+    const shows=cProgs(c.id).filter(p=>p.stop_ts>ps&&p.start_ts<pe);
+    if(!shows.length)continue;
+    h+=`<div class="tn-ch"><div class="tn-ch-bar">${chLogo(c)}<span class="tn-ch-num">${c.number}</span><span class="tn-ch-name">${c.name}</span></div><div class="tn-shows">`;
+    for(const p of shows){
+      const on=isOn(p);
+      h+=`<div class="tn-show${on?' on':''}" onclick='showDet(${esc(p)})'>
+        <div class="tn-stime">${fmt(new Date(p.start_ts*1e3))} - ${fmt(new Date(p.stop_ts*1e3))}</div>
+        <div class="tn-stitle">${p.title}</div>
+        <div class="tn-sep">${p.episode?p.episode+' - ':''}${epName(p)}</div>
+        <div class="tn-smeta">${p.rating?`<span class="tag">${p.rating}</span>`:''}
+        <span class="tag">${p.duration_min}m</span></div></div>`;
+    }
+    h+=`</div></div>`;
+  }
+  el.innerHTML=h;
+}
+
+// ====== DETAIL MODAL ======
+function detHTML(p){
+  const on=isOn(p),pr=pct(p.start_ts,p.stop_ts);
+  const c=D.channels.find(x=>x.id===p.channel_id);
+  const cn=c?c.number:'?';
+  const rem=Math.max(0,Math.round((p.stop_ts-Date.now()/1e3)/60));
+  return`
+    <div class="det-hero">${p.thumbnail||p.poster?`<img src="${p.thumbnail||p.poster}">`:''}
+      <div class="det-hero-grad"></div><button class="det-x" onclick="closeDet()">&#10005;</button></div>
+    <div class="det-body">
+      <div class="det-title">${p.title}</div>
+      ${p.subtitle?`<div class="det-sub">${p.episode?p.episode+' &mdash; ':''}${epName(p)}</div>`:''}
+      <div class="det-meta">
+        ${p.rating?`<span class="det-badge">${p.rating}</span>`:''}
+        <span class="det-badge">${p.duration_min} min</span>
+        <span class="det-badge">Ch ${cn}${c?' &middot; '+c.name:''}</span>
+      </div>
+      <div class="det-tags">${p.categories.filter(x=>x!=='Series').map(x=>`<span class="det-tag">${x}</span>`).join('')}</div>
+      <div class="det-time-box">
+        <div class="det-time-row"><span>Starts</span><strong>${fmt(new Date(p.start_ts*1e3))}</strong></div>
+        <div class="det-time-row"><span>Ends</span><strong>${fmt(new Date(p.stop_ts*1e3))}</strong></div>
+        ${on?`<div class="det-time-row"><span>Remaining</span><strong>${rem} min</strong></div>
+        <div class="det-bar"><div class="det-bar-fill" style="width:${pr}%"></div></div>`:''}</div>
+      <div class="det-btns">
+        <button class="det-watch" onclick="closeDet();watchOpen(${cn})">&#9654; Watch Here</button>
+        <button class="det-tune" onclick="rTune(${cn})">Tune Pi</button>
+        ${p.start_ts>Date.now()/1e3?`<button class="reminder-btn${hasReminder(p.channel_id,p.title,p.start_ts)?' active':''}" onclick="toggleReminder('${p.channel_id}',${cn},'${p.title.replace(/'/g,"\\'")}',${p.start_ts});closeDet()">${hasReminder(p.channel_id,p.title,p.start_ts)?'\uD83D\uDD14 Reminded':'\uD83D\uDD14 Remind Me'}</button>`:''}
+      </div>
+    </div>`;
+}
+
+function showDet(p){
+  document.getElementById('det-desk').innerHTML=detHTML(p);
+  document.getElementById('det-phone').innerHTML=detHTML(p);
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('det-desk').classList.remove('out');
+  document.getElementById('det-phone').classList.remove('out');
+}
+function closeDet(){
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('det-desk').classList.add('out');
+  document.getElementById('det-phone').classList.add('out');
+}
+
+// ====== WATCH PLAYER ======
+let wCurrent=null,wPrevious=null,wUITimer=null,wUIVisible=true;
+
+function watchOpen(chNum){
+  const el=document.getElementById('watch');
+  el.classList.add('open');
+  if(wCurrent&&wCurrent!==chNum) wPrevious=wCurrent;
+  wCurrent=chNum;
+  watchTune(chNum);
+  watchShowUI();
+  tickerShow('watch');
+  const mn=document.getElementById('mob-nav');if(mn)mn.style.display='none';
+}
+
+function watchClose(){
+  if(mgOpen)miniGuideToggle();
+  document.getElementById('watch').classList.remove('open');
+  hlsStop(document.getElementById('w-video'));
+  wCurrent=null;
+  tickerHide();
+  // Re-show prevue ticker if prevue is still open
+  if(currentView==='prevue')tickerShow('prevue');
+  // Restore mobile nav
+  const mn=document.getElementById('mob-nav');
+  if(mn&&currentView!=='prevue'&&currentView!=='weather')mn.style.display='';
+}
+
+function watchTune(chNum){
+  if(wCurrent&&wCurrent!==chNum) wPrevious=wCurrent;
+  wCurrent=chNum;
+  const vid=document.getElementById('w-video');
+  const loading=document.getElementById('w-loading');
+  loading.style.display='';
+  loading.textContent='Loading channel '+chNum+'...';
+  hlsPlay(vid,chNum,false);
+  vid.addEventListener('playing',()=>{loading.style.display='none'},{once:true});
+  vid.addEventListener('error',()=>{
+    loading.style.display='';
+    loading.textContent='Stream unavailable for CH '+chNum;
+  },{once:true});
+  watchUpdateInfo();
+  // Highlight channel in strip
+  document.querySelectorAll('.w-ch-btn').forEach(b=>b.classList.toggle('active',b.dataset.ch==chNum));
+  watchShowUI();
+}
+
+function watchUpdateInfo(){
+  if(!D||!wCurrent)return;
+  const c=D.channels.find(x=>x.number==wCurrent);
+  if(!c)return;
+  document.getElementById('w-ch-num').textContent=c.number;
+  document.getElementById('w-ch-name').textContent=c.name;
+  const n=Date.now()/1e3;
+  const p=D.programmes.find(x=>x.channel_id===c.id&&x.start_ts<=n&&x.stop_ts>n);
+  const info=document.getElementById('w-now-info');
+  if(p){
+    const pr=pct(p.start_ts,p.stop_ts);
+    const rem=Math.max(0,Math.round((p.stop_ts-n)/60));
+    info.innerHTML=`<div class="w-now-title">${p.title}</div>
+      <div class="w-now-sub">${p.episode?p.episode+' &mdash; ':''}${epName(p)} &middot; ${rem}m left</div>
+      <div class="w-now-bar"><div class="w-now-bar-fill" style="width:${pr}%"></div></div>`;
+  }else{
+    info.innerHTML=`<div class="w-now-title">No programme info</div>`;
+  }
+}
+
+function rWatchChannels(){
+  if(!D)return;
+  const el=document.getElementById('w-channels');
+  let h='';
+  for(const c of D.channels){
+    h+=`<button class="w-ch-btn${wCurrent==c.number?' active':''}" data-ch="${c.number}" onclick="watchTune(${c.number})">
+      ${chLogo(c)}<span class="w-ch-btn-num">${c.number}</span><span class="w-ch-btn-name">${c.name}</span></button>`;
+  }
+  el.innerHTML=h;
+}
+
+function watchToggleUI(){
+  wUIVisible=!wUIVisible;
+  document.getElementById('w-top').classList.toggle('hide',!wUIVisible);
+  document.getElementById('w-bottom').classList.toggle('hide',!wUIVisible);
+  if(wUIVisible)watchAutoHideUI();
+}
+function watchShowUI(){
+  wUIVisible=true;
+  document.getElementById('w-top').classList.remove('hide');
+  document.getElementById('w-bottom').classList.remove('hide');
+  watchAutoHideUI();
+}
+function watchAutoHideUI(){
+  if(wUITimer)clearTimeout(wUITimer);
+  wUITimer=setTimeout(()=>{
+    wUIVisible=false;
+    document.getElementById('w-top').classList.add('hide');
+    document.getElementById('w-bottom').classList.add('hide');
+  },5000);
+}
+
+// Update watch info every 30s
+setInterval(()=>{if(wCurrent)watchUpdateInfo()},3e4);
+
+// ====== MOBILE WATCH CONTROLS ======
+function watchTogglePlay(){
+  const vid=document.getElementById('w-video');
+  const btn=document.getElementById('w-play-btn');
+  if(vid.paused){vid.play().catch(()=>{});btn.innerHTML='&#10074;&#10074;'}
+  else{vid.pause();btn.innerHTML='&#9654;'}
+}
+function watchPrevCh(){
+  if(!D||!wCurrent)return;
+  const nums=D.channels.map(c=>c.number);
+  const idx=nums.indexOf(Number(wCurrent));
+  const prev=idx>0?nums[idx-1]:nums[nums.length-1];
+  watchTune(prev);
+}
+function watchNextCh(){
+  if(!D||!wCurrent)return;
+  const nums=D.channels.map(c=>c.number);
+  const idx=nums.indexOf(Number(wCurrent));
+  const next=idx<nums.length-1?nums[idx+1]:nums[0];
+  watchTune(next);
+}
+
+// ====== MINI-GUIDE OVERLAY ======
+let mgOpen=false;
+
+function miniGuideToggle(){
+  mgOpen=!mgOpen;
+  const el=document.getElementById('mini-guide');
+  if(mgOpen){miniGuideRender();el.classList.add('open');watchShowUI()}
+  else{el.classList.remove('open')}
+}
+
+function miniGuideRender(){
+  if(!D)return;
+  const el=document.getElementById('mini-guide');
+  const n=Date.now()/1e3;
+  let h='';
+  for(const c of D.channels){
+    const progs=D.programmes.filter(p=>p.channel_id===c.id).sort((a,b)=>a.start_ts-b.start_ts);
+    const now=progs.find(p=>p.start_ts<=n&&p.stop_ts>n);
+    const next=progs.find(p=>p.start_ts>n);
+    const active=wCurrent==c.number;
+    h+=`<div class="mg-row${active?' active':''}" onclick="watchTune(${c.number});miniGuideToggle()">
+      <span class="mg-num">${c.number}</span>
+      <span class="mg-name">${c.name}</span>
+      <div class="mg-now">
+        <div class="mg-now-title">${now?now.title:'--'}</div>
+        <div class="mg-now-time">${now?fmt(new Date(now.start_ts*1e3))+' - '+fmt(new Date(now.stop_ts*1e3)):''}</div>
+      </div>
+      <div class="mg-next">
+        <div class="mg-next-title">${next?'Next: '+next.title:''}</div>
+        <div class="mg-next-time">${next?fmt(new Date(next.start_ts*1e3)):''}</div>
+      </div>
+    </div>`;
+  }
+  el.innerHTML=h;
+}
+
+// ====== QUAD SPLIT VIEW ======
+let quadActive=false, quadSelected=0, quadChannels=[null,null,null,null];
+
+function quadOpen(){
+  if(!D||D.channels.length<4||wCurrent==null)return;
+  quadActive=true;
+  // Mute underlying watch stream
+  const wv=document.getElementById('w-video');
+  if(wv)wv.muted=true;
+  // Always put current watched channel in top-left (slot 0)
+  const currentCh=Number(wCurrent);
+  const nums=D.channels.map(c=>Number(c.number));
+  const idx=nums.indexOf(currentCh);
+  quadChannels[0]=currentCh;
+  // Fill remaining 3 slots with next sequential channels, skipping current
+  let ni=idx>=0?idx:0;
+  for(let i=1;i<4;i++){
+    ni=(ni+1)%nums.length;
+    if(nums[ni]===currentCh) ni=(ni+1)%nums.length;
+    quadChannels[i]=nums[ni];
+  }
+  document.getElementById('quad').classList.add('open');
+  document.getElementById('quad-close').style.display='flex';
+  const mn=document.getElementById('mob-nav');if(mn)mn.style.display='none';
+  for(let i=0;i<4;i++) quadTune(i,quadChannels[i]);
+  quadSelect(0);
+}
+
+function quadClose(){
+  quadActive=false;
+  document.getElementById('quad').classList.remove('open');
+  document.getElementById('quad-close').style.display='none';
+  const mn=document.getElementById('mob-nav');
+  if(mn&&currentView!=='prevue'&&currentView!=='weather')mn.style.display='';
+  for(let i=0;i<4;i++) hlsStop(document.getElementById('q-video-'+i));
+  // Restore watch stream audio
+  const wv=document.getElementById('w-video');
+  if(wv)wv.muted=false;
+}
+
+function quadTune(slot,chNum){
+  quadChannels[slot]=chNum;
+  const vid=document.getElementById('q-video-'+slot);
+  hlsPlay(vid,chNum,true);
+  if(slot===quadSelected) vid.muted=false;
+  const c=D.channels.find(x=>x.number==chNum);
+  document.getElementById('q-label-'+slot).textContent=c?'CH '+c.number+' '+c.name:'';
+  quadUpdateNow(slot);
+}
+
+function quadSelect(slot){
+  quadSelected=slot;
+  document.querySelectorAll('.quad-cell').forEach((el,i)=>{
+    el.classList.toggle('selected',i===slot);
+    document.getElementById('q-video-'+i).muted=(i!==slot);
+  });
+}
+
+function quadUpdateNow(slot){
+  const chNum=quadChannels[slot];
+  if(!chNum||!D)return;
+  const c=D.channels.find(x=>x.number==chNum);
+  if(!c)return;
+  const n=Date.now()/1e3;
+  const p=D.programmes.find(x=>x.channel_id===c.id&&x.start_ts<=n&&x.stop_ts>n);
+  document.getElementById('q-now-'+slot).innerHTML=p?
+    `<div style="font-weight:700">${p.title}</div><div style="color:var(--c-text-dim);font-size:11px">${p.episode||''}</div>`:'';
+}
+
+function quadNextCh(slot){
+  const nums=D.channels.map(c=>c.number);
+  const cur=quadChannels[slot];
+  const idx=nums.indexOf(cur);
+  const next=nums[(idx+1)%nums.length];
+  hlsStop(document.getElementById('q-video-'+slot));
+  quadTune(slot,next);
+}
+function quadPrevCh(slot){
+  const nums=D.channels.map(c=>c.number);
+  const cur=quadChannels[slot];
+  const idx=nums.indexOf(cur);
+  const prev=nums[(idx-1+nums.length)%nums.length];
+  hlsStop(document.getElementById('q-video-'+slot));
+  quadTune(slot,prev);
+}
+
+function watchFullscreen(){
+  const el=document.getElementById('watch');
+  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+  else el.requestFullscreen().catch(()=>{
+    // iOS Safari
+    const vid=document.getElementById('w-video');
+    if(vid.webkitEnterFullscreen)vid.webkitEnterFullscreen();
+  });
+}
+
+// Swipe left/right to change channels in watch mode
+(function(){
+  let sx=0,sy=0;
+  const wrap=document.querySelector('.w-video-wrap');
+  if(!wrap)return;
+  wrap.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+  wrap.addEventListener('touchend',e=>{
+    if(!wCurrent)return;
+    const dx=e.changedTouches[0].clientX-sx;
+    const dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>80&&Math.abs(dx)>Math.abs(dy)*1.5){
+      if(dx>0)watchPrevCh(); else watchNextCh();
+    }
+  },{passive:true});
+})();
+
+// Also toggle mobile controls visibility with the rest of the UI
+const _origToggle=watchToggleUI;
+watchToggleUI=function(){
+  _origToggle();
+  const mc=document.getElementById('w-mobile-controls');
+  if(mc)mc.classList.toggle('hide',!wUIVisible);
+};
+const _origShow=watchShowUI;
+watchShowUI=function(){
+  _origShow();
+  const mc=document.getElementById('w-mobile-controls');
+  if(mc)mc.classList.remove('hide');
+};
+
+// ====== REMOTE CONTROL ======
+let rmOpen=false,rmPoll=null;
+
+function toggleRemote(){
+  rmOpen=!rmOpen;
+  document.getElementById('remote-panel').classList.toggle('open',rmOpen);
+  document.getElementById('remote-toggle').classList.toggle('remote-active',rmOpen);
+  if(rmOpen){
+    rPollStatus();
+    if(!rmPoll)rmPoll=setInterval(rPollStatus,3000);
+  }else{
+    if(rmPoll){clearInterval(rmPoll);rmPoll=null}
+  }
+}
+
+function rRemoteChannels(){
+  if(!D)return;
+  const el=document.getElementById('rm-channels');
+  let h='';
+  for(const c of D.channels){
+    h+=`<button class="rm-ch-btn" data-ch="${c.number}" onclick="rTune(${c.number})">
+      ${chLogo(c)}${favStar(c.id)} ${c.number}<div class="rm-btn-name">${c.name}</div></button>`;
+  }
+  el.innerHTML=h;
+}
+
+async function rPollStatus(){
+  try{
+    const r=await fetch('/api/player/status');
+    const d=await r.json();
+    document.getElementById('rm-ch-num').textContent=d.channel;
+    document.getElementById('rm-ch-name').textContent=d.channel_name;
+    const st=document.getElementById('rm-state');
+    const stText=document.getElementById('rm-state-text');
+    const pauseBtn=document.getElementById('rm-pause');
+    const muteBtn=document.getElementById('rm-mute');
+    if(d.paused){
+      st.className='rm-state paused';stText.textContent='Paused';
+      pauseBtn.classList.add('active-state');
+    }else{
+      st.className='rm-state playing';stText.textContent='Playing';
+      pauseBtn.classList.remove('active-state');
+    }
+    if(d.muted){muteBtn.classList.add('active-state')}else{muteBtn.classList.remove('active-state')}
+    document.querySelectorAll('.rm-ch-btn').forEach(b=>{
+      b.classList.toggle('active',b.dataset.ch==d.channel);
+    });
+  }catch(e){
+    document.getElementById('rm-ch-name').textContent='Connection error';
+  }
+}
+
+async function rCmd(cmd){
+  try{await fetch('/api/player/'+cmd,{method:'POST'});rPollStatus()}catch(e){}
+}
+
+async function rTune(ch){
+  try{await fetch('/api/player/channel/'+ch,{method:'POST'});rPollStatus();closeDet()}catch(e){}
+}
+
+// ====== PREVUE VIDEO (HLS Pre-buffer) ======
+let pvActiveSlot='a';
+let pvPlaying=null;
+let pvChList=[],pvChIdx=0,pvRotateTimer=null;
+let pvPreloadTimer=null,pvPreloaded=false;
+let pvMuted=false;
+const PV_ROTATE_SEC=15;
+const PV_PRELOAD_DELAY=2000;
+
+function pvToggleMute(){
+  pvMuted=!pvMuted;
+  const activeVid=document.getElementById('pv-video-'+pvActiveSlot);
+  activeVid.muted=pvMuted;
+  const btn=document.getElementById('pv-mute-btn');
+  btn.innerHTML=pvMuted?'&#128264;':'&#128266;';
+  btn.classList.toggle('muted',pvMuted);
+}
+
+function pvStartOnActive(chNum){
+  const activeVid=document.getElementById('pv-video-'+pvActiveSlot);
+  const loading=document.getElementById('pv-loading');
+  loading.textContent='Tuning channel '+chNum+'...';
+  loading.style.display='';
+  hlsStop(activeVid);
+  hlsPlay(activeVid,chNum,pvMuted);
+  pvPlaying=chNum;
+  activeVid.addEventListener('playing',()=>{loading.style.display='none'},{once:true});
+}
+
+function pvPreloadNext(){
+  if(!pvChList.length)return;
+  const nextIdx=(pvChIdx+1)%pvChList.length;
+  const{c}=pvChList[nextIdx];
+  const inactiveSlot=pvActiveSlot==='a'?'b':'a';
+  const inactiveVid=document.getElementById('pv-video-'+inactiveSlot);
+  hlsStop(inactiveVid);
+  hlsPlay(inactiveVid,c.number,true); // always preload muted
+  pvPreloaded=true;
+}
+
+function pvRotateChannel(){
+  if(!D||!pvChList.length)return;
+  const vidA=document.getElementById('pv-video-a');
+  const vidB=document.getElementById('pv-video-b');
+  const loading=document.getElementById('pv-loading');
+
+  if(pvPreloaded){
+    pvChIdx=(pvChIdx+1)%pvChList.length;
+    if(pvActiveSlot==='a'){
+      vidA.classList.add('hidden');vidB.classList.remove('hidden');
+      vidA.muted=true;
+      vidB.muted=pvMuted; // unmute new active unless user muted
+      hlsStop(vidA);pvActiveSlot='b';
+    }else{
+      vidB.classList.add('hidden');vidA.classList.remove('hidden');
+      vidB.muted=true;
+      vidA.muted=pvMuted; // unmute new active unless user muted
+      hlsStop(vidB);pvActiveSlot='a';
+    }
+    loading.style.display='none';
+    pvPreloaded=false;
+  }else{
+    pvChIdx=(pvChIdx+1)%pvChList.length;
+    pvStartOnActive(pvChList[pvChIdx].c.number);
+  }
+
+  const{c,p}=pvChList[pvChIdx];
+  pvPlaying=c.number;
+  pvUpdateInfo(c,p);
+  pvShowBanner(c,p);
+
+  document.querySelectorAll('.pv-grid-row').forEach(r=>r.classList.remove('active'));
+  document.querySelectorAll(`.pv-grid-row[data-ch="${c.number}"]`).forEach(r=>r.classList.add('active'));
+
+  if(pvPreloadTimer)clearTimeout(pvPreloadTimer);
+  pvPreloadTimer=setTimeout(pvPreloadNext,PV_PRELOAD_DELAY);
+}
+
+function pvStopAll(){
+  hlsStop(document.getElementById('pv-video-a'));
+  hlsStop(document.getElementById('pv-video-b'));
+  pvPlaying=null;pvPreloaded=false;
+  if(pvPreloadTimer){clearTimeout(pvPreloadTimer);pvPreloadTimer=null}
+}
+
+// ====== CHANNEL BANNER ======
+let bannerTimer=null;
+
+function pvShowBanner(c,p){
+  const banner=document.getElementById('pv-banner');
+  const pr=pct(p.start_ts,p.stop_ts);
+  document.getElementById('pv-banner-ch').textContent='CH '+c.number;
+  document.getElementById('pv-banner-name').textContent=c.name;
+  document.getElementById('pv-banner-show').textContent=p.title;
+  document.getElementById('pv-banner-ep').textContent=p.episode?(p.episode+' - '+epName(p)):epName(p);
+  document.getElementById('pv-banner-bar').style.width=pr+'%';
+  banner.classList.add('show');
+  if(bannerTimer)clearTimeout(bannerTimer);
+  bannerTimer=setTimeout(()=>{banner.classList.remove('show')},4000);
+}
+
+function pvUpdateInfo(c,p){
+  const el=document.getElementById('pv-info');
+  const pr=pct(p.start_ts,p.stop_ts);
+  el.innerHTML=`<div class="pv-preview-ch">CH ${c.number} &mdash; ${c.name}</div>
+    <div class="pv-preview-title">${p.title}</div>
+    <div class="pv-preview-sub">${p.episode?p.episode+' &mdash; ':''}${epName(p)}</div>
+    <div class="pv-preview-meta">
+      ${p.rating?`<span class="pv-preview-badge">${p.rating}</span>`:''}
+      <span class="pv-preview-badge">${p.duration_min}m</span>
+      <div class="pv-preview-bar"><div class="pv-preview-bar-fill" style="width:${pr}%"></div></div>
+    </div>`;
+  const now=document.getElementById('pv-now');
+  now.innerHTML=`<span class="pv-now-badge">NOW</span>
+    <span class="pv-now-text"><span class="pv-now-ch">${c.number} ${c.name}:</span> ${p.title}${p.episode?' &mdash; '+p.episode:''}</span>`;
+}
+
+function rPrevue(){
+  const scr=document.getElementById('pv-scroll'),n=Date.now()/1e3;
+  // Build channel rotation list
+  pvChList=[];
+  for(const c of sortedChannels()){
+    const p=D.programmes.find(x=>x.channel_id===c.id&&x.start_ts<=n&&x.stop_ts>n);
+    if(p)pvChList.push({c,p});
+  }
+  // Time window: round down to half-hour, +3 hours
+  const vs=new Date();vs.setMinutes(vs.getMinutes()<30?0:30,0,0);
+  const vsTs=vs.getTime()/1e3,veTs=vsTs+3*3600;
+  // Pixels per minute — scale to fill available width
+  const chColW=window.innerWidth<=480?80:window.innerWidth<=840?100:140;
+  const pvPPM=Math.max(3,(window.innerWidth-chColW)/180);
+  // Time ruler
+  let rulerH='';
+  for(let i=0;i<6;i++){
+    const t=new Date(vs.getTime()+i*18e5);
+    const tTs=t.getTime()/1e3;
+    const isNow=tTs<=n&&(tTs+1800)>n;
+    rulerH+=`<div class="pv-ruler-slot${isNow?' now':''}" style="min-width:${30*pvPPM}px">${fmt(t)}</div>`;
+  }
+  document.getElementById('pv-ruler-times').innerHTML=rulerH;
+  // Grid rows — build twice for seamless vertical scroll loop
+  const channels=sortedChannels();
+  let h='';
+  for(let dup=0;dup<2;dup++){
+    for(const c of channels){
+      const ps=cProgs(c.id).filter(p=>p.stop_ts>vsTs&&p.start_ts<veTs);
+      h+=`<div class="pv-grid-row" data-ch="${c.number}">`;
+      h+=`<div class="pv-grid-ch">${chLogo(c)}<span class="pv-num">${c.number}</span><span class="pv-name">${c.name}</span></div>`;
+      h+=`<div class="pv-grid-progs">`;
+      for(const p of ps){
+        const a=Math.max(p.start_ts,vsTs),b=Math.min(p.stop_ts,veTs);
+        const w=Math.max((b-a)/60*pvPPM,60);
+        const on=isOn(p),pr=on?pct(p.start_ts,p.stop_ts):0;
+        const timeStr=fmt(new Date(p.start_ts*1e3));
+        h+=`<div class="pv-grid-cell${on?' on':''}" style="width:${w}px;min-width:${w}px" onclick='showDet(${esc(p)})'>
+          <div class="pv-stitle">${p.title}</div>
+          <div class="pv-sep">${p.episode||timeStr}</div>
+          ${on?`<div class="pv-cell-bar"><div class="pv-cell-bar-fill" style="width:${pr}%"></div></div>`:''}</div>`;
+      }
+      h+=`</div></div>`;
+    }
+  }
+  scr.innerHTML=h;
+  // Row height matches CSS min-height
+  const rowH=window.innerWidth<=480?38:window.innerWidth<=840?44:52;
+  const dist=channels.length*rowH;
+  scr.style.setProperty('--pv-dist',`-${dist}px`);
+  // Scroll speed: ~4s per channel for a steady, readable pace
+  scr.style.setProperty('--pv-dur',`${channels.length*4}s`);
+}
+
+// ====== VIEW SWITCHING ======
+function toggleMobTools(){
+  document.getElementById('mob-tools').classList.toggle('open');
+}
+// Close mob tools on outside click
+document.addEventListener('click',e=>{
+  const mt=document.getElementById('mob-tools');
+  const tb=document.getElementById('mob-tools-btn');
+  if(mt&&mt.classList.contains('open')&&!mt.contains(e.target)&&!tb.contains(e.target))mt.classList.remove('open');
+});
+
+function setView(v){
+  currentView=v;
+  document.querySelectorAll('.btn-pill[data-v]').forEach(b=>b.classList.toggle('active',b.dataset.v===v));
+  document.querySelectorAll('.mob-nav-btn[data-v]').forEach(b=>b.classList.toggle('active',b.dataset.v===v));
+  // Hide mobile nav in fullscreen views
+  const mn=document.getElementById('mob-nav');
+  if(mn)mn.style.display=(v==='prevue'||v==='weather')?'none':'';
+
+  const guideEls=document.querySelectorAll('.now-strip,.ruler,#guide');
+  const mobileEl=document.getElementById('mobile');
+  guideEls.forEach(el=>{el.style.display=v==='guide'?'':'none'});
+  if(window.innerWidth<=840){mobileEl.style.display=v==='guide'?'block':'none'}
+
+  document.getElementById('upnext-view').classList.toggle('active',v==='upnext');
+  document.getElementById('tonight-view').classList.toggle('active',v==='tonight');
+
+  // WeatherStar
+  const wsWasOpen=document.getElementById('weatherstar').classList.contains('open');
+  document.getElementById('weatherstar').classList.toggle('open',v==='weather');
+  if(v==='weather'&&!wsWasOpen){wsStart()}
+  else if(v!=='weather'&&wsWasOpen){wsStop()}
+
+  const wasOpen=document.getElementById('prevue').classList.contains('open');
+  document.getElementById('prevue').classList.toggle('open',v==='prevue');
+  if(v==='prevue'&&!wasOpen){
+    pvChIdx=-1;pvRotateChannel();
+    if(pvRotateTimer)clearInterval(pvRotateTimer);
+    pvRotateTimer=setInterval(pvRotateChannel,PV_ROTATE_SEC*1e3);
+    tickerShow('prevue');
+  }else if(v!=='prevue'&&wasOpen){
+    pvStopAll();
+    if(pvRotateTimer){clearInterval(pvRotateTimer);pvRotateTimer=null}
+    tickerHide();
+  }
+  // Hide ticker when switching away from prevue to non-watch views
+  if(v!=='prevue'&&!document.getElementById('watch').classList.contains('open')){
+    tickerHide();
+  }
+}
+
+function shiftTime(d){tOff=d===0?0:tOff+d;rRuler();rGrid()}
+function onSearch(v){search=v;rGrid();rMobile();rUpNext();rTonight()}
+
+// ====== KEYBOARD / TOUCH ======
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT')return;
+  // Quad split mode intercepts keys first
+  if(quadActive){
+    if(e.key==='Escape'){quadClose();return}
+    if(e.key>='1'&&e.key<='4'){quadSelect(parseInt(e.key)-1);return}
+    if(e.key==='ArrowUp'){quadPrevCh(quadSelected);return}
+    if(e.key==='ArrowDown'){quadNextCh(quadSelected);return}
+    if(e.key==='q'){quadClose();return}
+    return; // swallow other keys in quad mode
+  }
+  // Number keys for OSD (before other checks)
+  if(e.key>='0'&&e.key<='9'&&!e.ctrlKey&&!e.altKey&&!e.metaKey){osdInput(e.key);return}
+  if(e.key==='Escape'){
+    if(mgOpen){miniGuideToggle();return}
+    if(document.getElementById('watch').classList.contains('open'))watchClose();
+    else if(currentView==='weather')setView('guide');
+    else{closeDet();if(currentView==='prevue')setView('guide')}
+  }
+  if(e.key===' '&&currentView==='weather'){e.preventDefault();wsTogglePause();return}
+  if(e.key==='ArrowLeft'){if(currentView==='weather'){wsGo(-1)}else{shiftTime(-1)}return}
+  if(e.key==='ArrowRight'){if(currentView==='weather'){wsGo(1)}else{shiftTime(1)}return}
+  if(e.key==='ArrowUp'&&currentView==='weather'&&wsCurrent===6){wsNewsNav(-1);return}
+  if(e.key==='ArrowDown'&&currentView==='weather'&&wsCurrent===6){wsNewsNav(1);return}
+  if(e.key==='T'&&e.shiftKey){cycleTheme();return}
+  if(e.key==='g'){
+    if(document.getElementById('watch').classList.contains('open'))miniGuideToggle();
+    else setView('guide');
+  }
+  if(e.key==='p')setView('prevue');
+  if(e.key==='u')setView('upnext');
+  if(e.key==='t')setView('tonight');
+  if(e.key==='w')setView('weather');
+  if(e.key==='q'){
+    if(document.getElementById('watch').classList.contains('open'))quadOpen();
+  }
+  if(e.key==='l'){
+    if(document.getElementById('watch').classList.contains('open')&&wPrevious) watchTune(wPrevious);
+  }
+  if(e.key==='r')toggleRemote();
+  if(e.key==='c')tickerToggle();
+  if(e.key==='/'){e.preventDefault();document.getElementById('search').focus()}
+});
+
+// Close reminder dropdown on outside click
+document.addEventListener('click',e=>{
+  if(reminderDropdownOpen&&!e.target.closest('#reminder-dropdown')&&!e.target.closest('#bell-btn')){
+    reminderDropdownOpen=false;
+    document.getElementById('reminder-dropdown').classList.remove('open');
+  }
+});
+
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+document.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-tx;
+  if(Math.abs(dx)>100&&e.target.closest('.guide,.mobile'))shiftTime(dx>0?-1:1);
+},{passive:true});
+
+// ====== TICKER ======
+let tickerData=null,tickerVisible=false,tickerEnabled=true,tickerMode=null;
+let tickerRefreshTimer=null,tickerTimeTimer=null;
+
+function weatherIcon(cond){
+  if(!cond)return'\u2600\uFE0F';
+  const c=cond.toLowerCase();
+  if(c.includes('thunder'))return'\u26C8\uFE0F';
+  if(c.includes('snow')||c.includes('grains'))return'\u2744\uFE0F';
+  if(c.includes('freezing'))return'\u2744\uFE0F';
+  if(c.includes('heavy rain')||c.includes('heavy shower'))return'\uD83C\uDF27\uFE0F';
+  if(c.includes('rain')||c.includes('drizzle')||c.includes('shower'))return'\uD83C\uDF26\uFE0F';
+  if(c.includes('fog'))return'\uD83C\uDF2B\uFE0F';
+  if(c.includes('overcast'))return'\u2601\uFE0F';
+  if(c.includes('partly cloudy'))return'\u26C5';
+  if(c.includes('mainly clear'))return'\uD83C\uDF24\uFE0F';
+  return'\u2600\uFE0F';
+}
+
+async function tickerFetch(){
+  try{
+    const r=await fetch('/api/ticker');
+    tickerData=await r.json();
+    tickerBuild();
+  }catch(e){console.warn('Ticker fetch error',e)}
+}
+
+function tickerBuild(){
+  if(!tickerData)return;
+  const track=document.getElementById('ticker-track');
+  let segs=[];
+  const div='<span class="ticker-seg-divider">\u2726</span>';
+  // Weather
+  const w=tickerData.weather;
+  if(w){
+    segs.push(`<span class="ticker-seg"><span class="ticker-weather-icon">${weatherIcon(w.condition)}</span> ${w.location} ${Math.round(w.temperature)}\u00B0${w.unit} ${w.condition}${w.feels_like!=null?' \u2022 Feels '+Math.round(w.feels_like)+'\u00B0':''}</span>`);
+  }
+  // Time/Date
+  const now=new Date();
+  segs.push(`<span class="ticker-seg">${fmt(now)} \u2022 ${now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</span>`);
+  // Now playing
+  if(tickerData.now_playing){
+    for(const np of tickerData.now_playing){
+      let txt=`<span class="ticker-ch-num">CH${np.channel_number}</span> ${np.title}`;
+      if(np.episode)txt+=` \u2013 ${np.episode}`;
+      segs.push(`<span class="ticker-seg">${txt}</span>`);
+    }
+  }
+  // News headlines
+  if(tickerData.news){
+    for(const n of tickerData.news){
+      segs.push(`<span class="ticker-seg">\uD83D\uDCF0 ${n.source}: ${n.title}</span>`);
+    }
+  }
+  // Custom messages
+  if(tickerData.messages){
+    for(const m of tickerData.messages){
+      segs.push(`<span class="ticker-seg ticker-msg">${m}</span>`);
+    }
+  }
+  const content=segs.join(div);
+  // Duplicate for seamless loop
+  track.innerHTML=content+div+content+div;
+  // Calculate animation duration
+  requestAnimationFrame(()=>{
+    const speed=tickerData.speed||60;
+    const halfW=track.scrollWidth/2;
+    const dur=halfW/speed;
+    track.style.setProperty('--ticker-dur',dur+'s');
+  });
+}
+
+function tickerShow(mode){
+  if(!tickerEnabled)return;
+  const el=document.getElementById('ticker');
+  el.classList.remove('ticker-prevue','ticker-watch');
+  el.classList.add('ticker-'+mode,'active');
+  tickerMode=mode;
+  tickerVisible=true;
+  document.body.classList.add('has-ticker');
+  tickerFetch();
+  if(tickerRefreshTimer)clearInterval(tickerRefreshTimer);
+  tickerRefreshTimer=setInterval(tickerFetch,15*60*1000);
+  if(tickerTimeTimer)clearInterval(tickerTimeTimer);
+  tickerTimeTimer=setInterval(tickerBuild,60*1000);
+}
+
+function tickerHide(){
+  const el=document.getElementById('ticker');
+  el.classList.remove('active','ticker-prevue','ticker-watch');
+  tickerVisible=false;
+  tickerMode=null;
+  document.body.classList.remove('has-ticker');
+  if(tickerRefreshTimer){clearInterval(tickerRefreshTimer);tickerRefreshTimer=null}
+  if(tickerTimeTimer){clearInterval(tickerTimeTimer);tickerTimeTimer=null}
+}
+
+function tickerToggle(){
+  tickerEnabled=!tickerEnabled;
+  if(!tickerEnabled){tickerHide()}
+  else{
+    // Re-show if in a mode that supports it
+    if(currentView==='prevue')tickerShow('prevue');
+    else if(document.getElementById('watch').classList.contains('open'))tickerShow('watch');
+  }
+}
+
+// ====== THEME SYSTEM ======
+const THEMES=['default','prevue','comcast','crt'];
+let currentTheme=localStorage.getItem('pitvTheme')||DEFAULT_THEME||'default';
+function applyTheme(t){
+  currentTheme=t;
+  document.body.className=document.body.className.replace(/\btheme-\S+/g,'').replace(/\bcrt-on\b/g,'').trim();
+  if(t!=='default')document.body.classList.add('theme-'+t);
+  if(t==='crt')document.body.classList.add('crt-on');
+  localStorage.setItem('pitvTheme',t);
+}
+function cycleTheme(){
+  const i=(THEMES.indexOf(currentTheme)+1)%THEMES.length;
+  applyTheme(THEMES[i]);
+}
+applyTheme(currentTheme);
+
+// ====== CRT TOGGLE ======
+function toggleCRT(){
+  document.body.classList.toggle('crt-on');
+}
+
+// ====== CHANNEL LOGO HELPER ======
+function chLogo(c,cls){
+  if(!c)return'';
+  const extra=cls?' '+cls:'';
+  const num=c.number||c.channel_number;
+  if(num){
+    const svgFb=`/static/logos/${num}.svg`;
+    const etvFb=c.logo||'';
+    return `<img class="ch-logo${extra}" src="/static/Media/${num}.png" alt="" loading="lazy" data-svg="${svgFb}" data-etv="${etvFb}" onerror="if(this.dataset.svg&&this.src.indexOf('Media')>-1){this.src=this.dataset.svg}else if(this.dataset.etv){this.src=this.dataset.etv}else{this.style.display='none';this.onerror=null}">`;
+  }
+  if(!c.logo)return'';
+  return `<img class="ch-logo${extra}" src="${c.logo}" alt="" loading="lazy">`;
+}
+
+// ====== CATEGORY FILTER ======
+let activeCats=[];
+let catDropdownOpen=false;
+function getAllCategories(){
+  if(!D)return[];
+  const cats={};
+  for(const p of D.programmes){
+    for(const cat of p.categories){
+      if(cat==='Series'||cat==='Movie')continue;// skip meta-categories
+      cats[cat]=(cats[cat]||0)+1;
+    }
+  }
+  return Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+}
+function buildCatPills(){
+  const el=document.getElementById('cat-pills');
+  const cats=getAllCategories();
+  let h='';
+  for(const[cat,count]of cats){
+    const isActive=activeCats.includes(cat);
+    h+=`<button class="cat-pill${isActive?' active':''}" onclick="toggleCat('${cat.replace(/'/g,"\\'")}')">${cat} <span class="cat-pill-count">${count}</span></button>`;
+  }
+  el.innerHTML=h;
+}
+function toggleCat(cat){
+  const i=activeCats.indexOf(cat);
+  if(i>=0)activeCats.splice(i,1);else activeCats.push(cat);
+  buildCatPills();updateCatBtn();render();
+}
+function clearCatFilter(){
+  activeCats=[];buildCatPills();updateCatBtn();render();
+}
+function toggleCatDropdown(){
+  catDropdownOpen=!catDropdownOpen;
+  document.getElementById('cat-dropdown').classList.toggle('open',catDropdownOpen);
+  if(catDropdownOpen)buildCatPills();
+}
+function updateCatBtn(){
+  const btn=document.getElementById('cat-filter-btn');
+  if(activeCats.length>0){
+    btn.classList.add('active');
+    btn.innerHTML='&#9776; Filter <span class="fav-count">'+activeCats.length+'</span>';
+  }else{
+    btn.classList.remove('active');
+    btn.innerHTML='&#9776; Filter';
+  }
+}
+function hitCat(p){
+  if(!activeCats.length)return true;
+  return p.categories.some(c=>activeCats.includes(c));
+}
+// Close cat dropdown on outside click
+document.addEventListener('click',e=>{
+  if(catDropdownOpen&&!e.target.closest('#cat-dropdown')&&!e.target.closest('#cat-filter-btn')){
+    catDropdownOpen=false;
+    document.getElementById('cat-dropdown').classList.remove('open');
+  }
+});
+
+// ====== FAVORITES ======
+let favorites=JSON.parse(localStorage.getItem('pitvFavorites')||'[]');
+let favsFilterActive=false;
+function isFav(chId){return favorites.includes(chId)}
+function toggleFav(chId){
+  const i=favorites.indexOf(chId);
+  if(i>=0)favorites.splice(i,1);else favorites.push(chId);
+  localStorage.setItem('pitvFavorites',JSON.stringify(favorites));
+  render();rRemoteChannels();rWatchChannels();updateFavsBtn();
+}
+function favStar(chId){
+  return `<button class="fav-btn${isFav(chId)?' starred':''}" onclick="event.stopPropagation();toggleFav('${chId}')">${isFav(chId)?'\u2605':'\u2606'}</button>`;
+}
+function sortedChannels(){
+  if(!D)return[];
+  if(favsFilterActive)return D.channels.filter(c=>isFav(c.id));
+  const favs=D.channels.filter(c=>isFav(c.id));
+  const rest=D.channels.filter(c=>!isFav(c.id));
+  return[...favs,...rest];
+}
+function toggleFavsFilter(){
+  favsFilterActive=!favsFilterActive;
+  document.getElementById('favs-filter').classList.toggle('active',favsFilterActive);
+  render();
+}
+function updateFavsBtn(){
+  const btn=document.getElementById('favs-filter');
+  const n=favorites.length;
+  if(n>0&&!favsFilterActive){btn.innerHTML='Favs <span class="fav-count">'+n+'</span>'}
+  else if(favsFilterActive){btn.innerHTML='Favs <span class="fav-count">'+n+'</span>'}
+  else{btn.textContent='Favs'}
+}
+
+// ====== REMINDERS ======
+let reminders=JSON.parse(localStorage.getItem('pitvReminders')||'[]');
+let reminderDropdownOpen=false;
+let reminderCheckTimer=null;
+function hasReminder(chId,title,startTs){
+  return reminders.some(r=>r.channel_id===chId&&r.title===title&&r.start_ts===startTs);
+}
+function toggleReminder(chId,chNum,title,startTs){
+  const idx=reminders.findIndex(r=>r.channel_id===chId&&r.title===title&&r.start_ts===startTs);
+  if(idx>=0){reminders.splice(idx,1)}
+  else{
+    reminders.push({channel_id:chId,channel_number:chNum,title:title,start_ts:startTs});
+    if(Notification.permission==='default')Notification.requestPermission();
+  }
+  localStorage.setItem('pitvReminders',JSON.stringify(reminders));
+  updateBellBadge();
+  render();
+}
+function updateBellBadge(){
+  const now=Date.now()/1e3;
+  const upcoming=reminders.filter(r=>r.start_ts>now);
+  const badge=document.getElementById('bell-badge');
+  if(upcoming.length>0){badge.style.display='';badge.textContent=upcoming.length}
+  else{badge.style.display='none'}
+}
+function checkReminders(){
+  const now=Date.now()/1e3;
+  const twoMinBefore=now+120;
+  let changed=false;
+  reminders=reminders.filter(r=>{
+    if(r.start_ts<now){changed=true;return false}// past, remove
+    if(r.start_ts<=twoMinBefore&&!r.notified){
+      r.notified=true;
+      if(Notification.permission==='granted'){
+        new Notification('Pi TV Reminder',{
+          body:r.title+' starts soon on CH '+r.channel_number,
+          icon:'\uD83D\uDD14',tag:'pitv-'+r.start_ts
+        });
+      }
+      changed=true;
+    }
+    return true;
+  });
+  if(changed){
+    localStorage.setItem('pitvReminders',JSON.stringify(reminders));
+    updateBellBadge();
+  }
+}
+function toggleReminderDropdown(){
+  reminderDropdownOpen=!reminderDropdownOpen;
+  const dd=document.getElementById('reminder-dropdown');
+  dd.classList.toggle('open',reminderDropdownOpen);
+  if(reminderDropdownOpen)renderReminderList();
+}
+function renderReminderList(){
+  const el=document.getElementById('reminder-list');
+  const now=Date.now()/1e3;
+  const upcoming=reminders.filter(r=>r.start_ts>now).sort((a,b)=>a.start_ts-b.start_ts);
+  if(!upcoming.length){el.innerHTML='<div class="reminder-empty">No upcoming reminders</div>';return}
+  let h='';
+  for(const r of upcoming){
+    const t=new Date(r.start_ts*1e3);
+    h+=`<div class="reminder-dropdown-item">
+      <div class="rd-info"><div class="rd-title">${r.title}</div>
+      <div class="rd-time">CH ${r.channel_number} \u2022 ${fmt(t)}</div></div>
+      <button class="rd-cancel" onclick="event.stopPropagation();toggleReminder('${r.channel_id}',${r.channel_number},'${r.title.replace(/'/g,"\\'")}',${r.start_ts});renderReminderList()" title="Cancel">\u2715</button>
+    </div>`;
+  }
+  el.innerHTML=h;
+}
+
+// ====== CHANNEL SURFING OSD ======
+let osdBuffer='',osdTimer=null,osdHideTimer=null;
+function osdShow(chNumStr){
+  const el=document.getElementById('osd');
+  document.getElementById('osd-ch-num').textContent=chNumStr;
+  // Look up channel info
+  if(D){
+    const c=D.channels.find(x=>x.number==chNumStr);
+    if(c){
+      document.getElementById('osd-ch-name').textContent=c.name;
+      const n=Date.now()/1e3;
+      const p=D.programmes.find(x=>x.channel_id===c.id&&x.start_ts<=n&&x.stop_ts>n);
+      if(p){
+        document.getElementById('osd-show').textContent=p.title;
+        document.getElementById('osd-bar-fill').style.width=pct(p.start_ts,p.stop_ts)+'%';
+      }else{
+        document.getElementById('osd-show').textContent='';
+        document.getElementById('osd-bar-fill').style.width='0%';
+      }
+    }else{
+      document.getElementById('osd-ch-name').textContent='Unknown';
+      document.getElementById('osd-show').textContent='';
+      document.getElementById('osd-bar-fill').style.width='0%';
+    }
+  }
+  el.classList.add('visible');
+  if(osdHideTimer)clearTimeout(osdHideTimer);
+  osdHideTimer=setTimeout(()=>{el.classList.remove('visible')},3000);
+}
+function osdInput(digit){
+  osdBuffer+=digit;
+  osdShow(osdBuffer);
+  if(osdTimer)clearTimeout(osdTimer);
+  osdTimer=setTimeout(()=>{
+    const ch=parseInt(osdBuffer);
+    osdBuffer='';
+    // Auto-tune if watch player is open
+    if(document.getElementById('watch').classList.contains('open')&&D){
+      const c=D.channels.find(x=>x.number==ch);
+      if(c)watchTune(c.number);
+    }
+  },1500);
+}
+
+// ====== WEATHERSTAR ======
+let wsData=null,wsCurrent=0,wsCycleTimer=null,wsMusicPlaying=false;
+const WS_SCREENS=7;
+let wsNewsData=[];
+let wsNewsIdx=0; // which news story to feature on detail screen
+let wsPlaylistQueue=[],wsTrackIdx=0;
+let wsPaused=false,wsTouchStartX=0,wsTouchStartY=0;
+
+async function wsFetch(){
+  try{
+    const [wr,nr]=await Promise.all([fetch('/api/weather'),fetch('/api/news')]);
+    wsData=await wr.json();
+    wsNewsData=await nr.json();
+  }catch(e){console.warn('Weather/news fetch error',e)}
+}
+function wsStart(){
+  wsFetch().then(()=>{
+    wsRenderAll();
+    wsCurrent=0;wsShowScreen(0);
+    if(wsCycleTimer)clearInterval(wsCycleTimer);
+    wsCycleTimer=setInterval(wsNext,9000);
+  });
+  const loc=document.getElementById('ws-location');
+  if(tickerData&&tickerData.weather)loc.textContent=tickerData.weather.location;
+  const hasMusic=WS_MUSIC_URL||WS_PLAYLIST.length;
+  if(hasMusic){
+    document.getElementById('ws-music-btn').style.display='';
+    const audio=document.getElementById('ws-audio');
+    if(WS_PLAYLIST.length){
+      // Shuffle playlist
+      wsPlaylistQueue=[...WS_PLAYLIST];
+      for(let i=wsPlaylistQueue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[wsPlaylistQueue[i],wsPlaylistQueue[j]]=[wsPlaylistQueue[j],wsPlaylistQueue[i]]}
+      wsTrackIdx=0;
+      audio.src=wsPlaylistQueue[0].url;
+      wsUpdateTrackDisplay();
+      audio.onended=wsNextTrack;
+    }else{
+      audio.src=WS_MUSIC_URL;
+      audio.loop=true;
+      wsUpdateTrackDisplay();
+    }
+  }
+}
+function wsNextTrack(){
+  if(!WS_PLAYLIST.length)return;
+  wsTrackIdx=(wsTrackIdx+1)%wsPlaylistQueue.length;
+  // Reshuffle when we loop back
+  if(wsTrackIdx===0){
+    for(let i=wsPlaylistQueue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[wsPlaylistQueue[i],wsPlaylistQueue[j]]=[wsPlaylistQueue[j],wsPlaylistQueue[i]]}
+  }
+  const audio=document.getElementById('ws-audio');
+  audio.src=wsPlaylistQueue[wsTrackIdx].url;
+  wsUpdateTrackDisplay();
+  if(wsMusicPlaying)audio.play().catch(()=>{});
+}
+function wsUpdateTrackDisplay(){
+  const el=document.getElementById('ws-track-name');
+  if(!el)return;
+  if(WS_PLAYLIST.length&&wsPlaylistQueue.length){
+    el.textContent=wsPlaylistQueue[wsTrackIdx].title;
+    el.style.display='';
+  }else if(WS_MUSIC_URL){
+    el.textContent='Smooth Jazz';
+    el.style.display='';
+  }else{el.style.display='none'}
+}
+function wsStop(){
+  if(wsCycleTimer){clearInterval(wsCycleTimer);wsCycleTimer=null}
+  wsPaused=false;
+  document.getElementById('ws-pause-indicator').classList.remove('visible');
+  const audio=document.getElementById('ws-audio');
+  audio.pause();audio.currentTime=0;audio.onended=null;
+  wsMusicPlaying=false;
+  document.getElementById('ws-music-btn').classList.remove('playing');
+}
+function wsTogglePause(){
+  wsPaused=!wsPaused;
+  const ind=document.getElementById('ws-pause-indicator');
+  if(wsPaused){
+    if(wsCycleTimer){clearInterval(wsCycleTimer);wsCycleTimer=null}
+    ind.classList.add('visible');
+  }else{
+    wsCycleTimer=setInterval(wsNext,9000);
+    ind.classList.remove('visible');
+  }
+}
+function wsPauseAutoResume(){
+  if(!wsPaused){
+    wsPaused=true;
+    if(wsCycleTimer){clearInterval(wsCycleTimer);wsCycleTimer=null}
+    document.getElementById('ws-pause-indicator').classList.add('visible');
+  }
+}
+function wsGo(dir){
+  wsPauseAutoResume();
+  wsCurrent=(wsCurrent+dir+WS_SCREENS)%WS_SCREENS;
+  if(wsCurrent===6&&wsNewsData.length)wsRenderNewsDetail();
+  wsShowScreen(wsCurrent);
+}
+function wsNewsNav(dir){
+  if(!wsNewsData.length)return;
+  wsNewsIdx=(wsNewsIdx+dir+wsNewsData.length)%wsNewsData.length;
+  wsRenderNewsDetail();
+}
+function wsNext(){
+  wsCurrent=(wsCurrent+1)%WS_SCREENS;
+  // Advance featured news story when cycling through news detail screen
+  if(wsCurrent===6&&wsNewsData.length){
+    wsNewsIdx=(wsNewsIdx+1)%wsNewsData.length;
+    wsRenderNewsDetail();
+  }
+  wsShowScreen(wsCurrent);
+}
+function wsShowScreen(idx){
+  document.querySelectorAll('.ws-screen').forEach((s,i)=>{
+    s.classList.remove('active','exiting');
+    if(i===idx)requestAnimationFrame(()=>s.classList.add('active'));
+    else if(i===(idx-1+WS_SCREENS)%WS_SCREENS)s.classList.add('exiting');
+  });
+  document.querySelectorAll('.ws-dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+}
+function wsToggleMusic(){
+  const audio=document.getElementById('ws-audio');
+  const btn=document.getElementById('ws-music-btn');
+  if(wsMusicPlaying){audio.pause();wsMusicPlaying=false;btn.classList.remove('playing')}
+  else{audio.play().catch(()=>{});wsMusicPlaying=true;btn.classList.add('playing');wsUpdateTrackDisplay()}
+}
+function wsRenderAll(){
+  if(!wsData)return;
+  wsRenderCurrent();
+  wsRenderToday();
+  wsRenderHourly();
+  wsRenderDaily();
+  wsRenderOutlook();
+  wsRenderNews();
+  wsRenderNewsDetail();
+  wsRenderNewsTicker();
+}
+function wsRenderCurrent(){
+  const c=wsData.current;if(!c)return;
+  const el=document.getElementById('ws-screen-0');
+  el.innerHTML=`
+    <div class="ws-temp-big">${Math.round(c.temperature)}\u00B0</div>
+    <div class="ws-condition">${weatherIcon(c.condition)} ${c.condition}</div>
+    <div class="ws-details">
+      <div class="ws-detail-card"><div class="ws-detail-label">Feels Like</div><div class="ws-detail-value">${Math.round(c.feels_like)}\u00B0</div></div>
+      <div class="ws-detail-card"><div class="ws-detail-label">Wind</div><div class="ws-detail-value">${Math.round(c.wind_speed)} mph</div></div>
+      <div class="ws-detail-card"><div class="ws-detail-label">Humidity</div><div class="ws-detail-value">${c.humidity!=null?c.humidity+'%':'--'}</div></div>
+      <div class="ws-detail-card"><div class="ws-detail-label">UV Index</div><div class="ws-detail-value">${c.uv_index!=null?c.uv_index:'--'}</div></div>
+    </div>`;
+}
+function wsRenderToday(){
+  const d=wsData.daily;if(!d||!d.length)return;
+  const today=d[0];
+  const el=document.getElementById('ws-screen-1');
+  el.innerHTML=`
+    <div class="ws-section-title">Today's Forecast</div>
+    <div class="ws-today-grid">
+      <div class="ws-today-card"><div class="ws-today-card-label">High</div><div class="ws-today-card-value">${Math.round(today.high)}\u00B0</div></div>
+      <div class="ws-today-card"><div class="ws-today-card-label">Low</div><div class="ws-today-card-value">${Math.round(today.low)}\u00B0</div></div>
+      <div class="ws-today-card"><div class="ws-today-card-label">Condition</div><div class="ws-today-card-value" style="font-size:20px">${weatherIcon(today.condition)} ${today.condition}</div></div>
+      <div class="ws-today-card"><div class="ws-today-card-label">Precip Chance</div><div class="ws-today-card-value">${today.precip_probability}%</div></div>
+    </div>`;
+}
+function wsRenderHourly(){
+  const h=wsData.hourly;if(!h||!h.length)return;
+  const el=document.getElementById('ws-screen-2');
+  const next12=h.slice(0,12);
+  const temps=next12.map(x=>x.temperature);
+  const minT=Math.min(...temps),maxT=Math.max(...temps);
+  const range=maxT-minT||1;
+  let bars='';
+  for(const hr of next12){
+    const pct=((hr.temperature-minT)/range)*150+20;
+    const t=new Date(hr.time);
+    const tStr=t.getHours()%12||12;
+    const ampm=t.getHours()>=12?'p':'a';
+    bars+=`<div class="ws-hourly-bar">
+      <div class="ws-hourly-temp">${Math.round(hr.temperature)}\u00B0</div>
+      <div class="ws-hourly-bar-fill" style="height:${pct}px"></div>
+      <div class="ws-hourly-time">${tStr}${ampm}</div>
+    </div>`;
+  }
+  el.innerHTML=`<div class="ws-section-title">Hourly Forecast</div><div class="ws-hourly-chart">${bars}</div>`;
+}
+function wsRenderDaily(){
+  const d=wsData.daily;if(!d||d.length<2)return;
+  const el=document.getElementById('ws-screen-3');
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let cards='';
+  for(let i=0;i<d.length;i++){
+    const day=d[i];
+    const dt=new Date(day.date+'T12:00:00');
+    const name=i===0?'Today':days[dt.getDay()];
+    cards+=`<div class="ws-day-card">
+      <div class="ws-day-name">${name}</div>
+      <div class="ws-day-icon">${weatherIcon(day.condition)}</div>
+      <div class="ws-day-temps">${Math.round(day.high)}\u00B0 <span>${Math.round(day.low)}\u00B0</span></div>
+      <div class="ws-day-precip">\uD83D\uDCA7 ${day.precip_probability}%</div>
+    </div>`;
+  }
+  const title=d.length+'-Day Forecast';
+  el.innerHTML=`<div class="ws-section-title">${title}</div><div class="ws-daily-row">${cards}</div>`;
+}
+function wsRenderOutlook(){
+  const d=wsData.daily;const c=wsData.current;
+  if(!d||!d.length||!c)return;
+  const el=document.getElementById('ws-screen-4');
+  const today=d[0];
+  const tomorrow=d.length>1?d[1]:null;
+  let text=`<em>Currently ${c.condition.toLowerCase()}</em> with a temperature of ${Math.round(c.temperature)}\u00B0. `;
+  text+=`Today\u2019s high near <em>${Math.round(today.high)}\u00B0</em>, low around <em>${Math.round(today.low)}\u00B0</em>. `;
+  if(today.precip_probability>30)text+=`There is a <em>${today.precip_probability}%</em> chance of precipitation. `;
+  if(tomorrow){
+    text+=`Tomorrow expect <em>${tomorrow.condition.toLowerCase()}</em> with highs near <em>${Math.round(tomorrow.high)}\u00B0</em>`;
+    if(tomorrow.precip_probability>30)text+=` and a <em>${tomorrow.precip_probability}%</em> chance of precipitation`;
+    text+='. ';
+  }
+  if(c.uv_index!=null&&c.uv_index>=6)text+=`UV index is <em>${c.uv_index}</em> \u2014 sun protection recommended.`;
+  el.innerHTML=`<div class="ws-section-title">Extended Outlook</div><div class="ws-outlook">${text}</div>`;
+}
+function wsRenderNews(){
+  const el=document.getElementById('ws-screen-5');
+  if(!wsNewsData||!wsNewsData.length){
+    el.innerHTML='<div class="ws-section-title">Headlines</div><div class="ws-outlook">No news available</div>';
+    return;
+  }
+  const items=wsNewsData.slice(0,8);
+  let h='<div class="ws-section-title">Top Headlines</div><div class="ws-news-list">';
+  for(let i=0;i<items.length;i++){
+    const n=items[i];
+    h+=`<div class="ws-news-item ws-news-clickable" data-news-idx="${i}">
+      <span class="ws-news-source">${n.source}</span>
+      <span class="ws-news-title">${n.title}</span>
+      ${n.published?`<span class="ws-news-time">${n.published}</span>`:''}
+    </div>`;
+  }
+  h+='</div>';
+  el.innerHTML=h;
+}
+function wsRenderNewsDetail(){
+  const el=document.getElementById('ws-screen-6');
+  if(!wsNewsData||!wsNewsData.length){
+    el.innerHTML='<div class="ws-section-title">News</div><div class="ws-outlook">No stories available</div>';
+    return;
+  }
+  const idx=wsNewsIdx%wsNewsData.length;
+  const story=wsNewsData[idx];
+  el.innerHTML=`
+    <div class="ws-section-title">In The News</div>
+    <div class="ws-news-detail">
+      <div class="ws-news-detail-source">${story.source}</div>
+      <div class="ws-news-detail-title">${story.title}</div>
+      ${story.summary?`<div class="ws-news-detail-summary">${story.summary}</div>`:''}
+    </div>
+    <div class="ws-news-nav">
+      <button class="ws-news-nav-btn" onclick="wsNewsNav(-1)">\u25C0 Prev</button>
+      <span class="ws-news-counter">${idx+1} / ${wsNewsData.length}</span>
+      <button class="ws-news-nav-btn" onclick="wsNewsNav(1)">Next \u25B6</button>
+    </div>`;
+}
+function wsRenderNewsTicker(){
+  const track=document.getElementById('ws-news-track');
+  if(!wsNewsData||!wsNewsData.length){track.innerHTML='';return}
+  // Build duplicated track for seamless scroll
+  let segs='';
+  for(const n of wsNewsData){
+    segs+=`<span class="ws-news-seg"><span class="ws-news-seg-source">${n.source}</span> ${n.title}</span><span class="ws-news-seg-divider">\u2022</span>`;
+  }
+  track.innerHTML=segs+segs; // duplicate for seamless loop
+  const dur=Math.max(40,wsNewsData.length*6);
+  track.style.setProperty('--ws-news-dur',dur+'s');
+}
+
+// --- WeatherStar event listeners ---
+// Dot click navigation
+document.getElementById('ws-dots').addEventListener('click',e=>{
+  const dot=e.target.closest('.ws-dot');
+  if(!dot)return;
+  const idx=parseInt(dot.dataset.i,10);
+  if(isNaN(idx))return;
+  wsPauseAutoResume();
+  wsCurrent=idx;
+  if(wsCurrent===6&&wsNewsData.length)wsRenderNewsDetail();
+  wsShowScreen(wsCurrent);
+});
+
+// Touch/swipe navigation
+(function(){
+  const body=document.getElementById('ws-body');
+  body.addEventListener('touchstart',e=>{
+    wsTouchStartX=e.changedTouches[0].clientX;
+    wsTouchStartY=e.changedTouches[0].clientY;
+  },{passive:true});
+  body.addEventListener('touchend',e=>{
+    // Skip swipe if touch is inside daily-row (let native scroll work)
+    if(e.target.closest('.ws-daily-row'))return;
+    const dx=e.changedTouches[0].clientX-wsTouchStartX;
+    const dy=e.changedTouches[0].clientY-wsTouchStartY;
+    if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy))return; // too short or vertical
+    wsGo(dx<0?1:-1);
+  },{passive:true});
+})();
+
+// Clickable news headlines
+document.getElementById('ws-body').addEventListener('click',e=>{
+  const item=e.target.closest('.ws-news-clickable');
+  if(item){
+    const idx=parseInt(item.dataset.newsIdx,10);
+    if(!isNaN(idx)){
+      wsNewsIdx=idx;
+      wsRenderNewsDetail();
+      wsPauseAutoResume();
+      wsCurrent=6;
+      wsShowScreen(6);
+    }
+    return;
+  }
+  // Clicking elsewhere in ws-body toggles pause (only in weather view)
+  if(currentView==='weather'&&!e.target.closest('button')&&!e.target.closest('.ws-news-nav-btn'))wsTogglePause();
+});
+
+// ====== INIT ======
+load();
+// Handle ?view= URL param (for PWA shortcuts)
+{const vp=new URLSearchParams(window.location.search).get('view');
+if(vp&&['guide','upnext','tonight','prevue','weather'].includes(vp))setTimeout(()=>setView(vp),500)}
+// Re-render active views every 60s (progress bars, now-playing)
+setInterval(()=>{
+  rNow();rGrid();rMobile();
+  if(currentView==='upnext')rUpNext();
+  if(currentView==='tonight')rTonight();
+  if(currentView==='prevue')rPrevue();
+},6e4);
+// Full EPG data refresh every 5 minutes
+setInterval(load,3e5);
+// Reminder check every 30s
+reminderCheckTimer=setInterval(checkReminders,30000);
+updateBellBadge();
+updateFavsBtn();
+updateCatBtn();
+
+// ====== SERVICE WORKER (PWA) ======
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js',{scope:'/'})
+    .then(r=>console.log('SW registered',r.scope))
+    .catch(e=>console.warn('SW registration failed',e));
+}
+</script>
+</body>
+</html>

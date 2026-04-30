@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" rx="24" fill="#0a2a2a"/>
+  <!-- Stacked play buttons -->
+  <g fill="#43a047">
+    <polygon points="65,45 145,75 65,105"/>
+    <polygon points="65,75 145,105 65,135"/>
+    <polygon points="65,105 145,135 65,165"/>
+  </g>
+</svg>

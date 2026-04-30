@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" rx="24" fill="#0a0a14"/>
+  <!-- Crescent moon with eye -->
+  <g fill="#9040c0">
+    <!-- Moon crescent -->
+    <circle cx="95" cy="90" r="55"/>
+    <circle cx="120" cy="70" r="45" fill="#0a0a14"/>
+    <!-- Eye below moon -->
+    <path d="M50,140 Q100,115 150,140 Q100,165 50,140 Z" fill="#9040c0"/>
+    <!-- Pupil -->
+    <circle cx="100" cy="140" r="12" fill="#0a0a14"/>
+    <!-- Highlight -->
+    <circle cx="105" cy="137" r="4" fill="#c080e0"/>
+  </g>
+</svg>

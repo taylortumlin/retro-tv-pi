@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" rx="24" fill="#1a2040"/>
+  <!-- Tea cup -->
+  <g>
+    <!-- Cup body -->
+    <path d="M45,80 L55,145 Q100,165 145,145 L155,80 Z" fill="#e53935"/>
+    <!-- Handle -->
+    <path d="M155,90 Q185,90 185,115 Q185,140 155,135" fill="none" stroke="#e53935" stroke-width="10" stroke-linecap="round"/>
+    <!-- Saucer -->
+    <ellipse cx="100" cy="152" rx="70" ry="14" fill="#e53935"/>
+    <!-- Steam -->
+    <path d="M80,70 Q85,50 80,35" fill="none" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <path d="M100,65 Q105,45 100,28" fill="none" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <path d="M120,70 Q125,50 120,35" fill="none" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  </g>
+</svg>

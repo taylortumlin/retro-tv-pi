@@ -18,6 +18,10 @@ backups/
 # Claude Code
 .claude/
 
+# Frontend
+frontend/node_modules/
+static/dist/
+
 # OS
 .DS_Store
 Thumbs.db

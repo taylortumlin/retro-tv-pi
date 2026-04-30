@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" rx="24" fill="#1a1a3e"/>
+  <!-- Scales of Justice -->
+  <g fill="#ffc800">
+    <!-- Center post -->
+    <rect x="94" y="50" width="12" height="100" rx="3"/>
+    <!-- Base -->
+    <rect x="70" y="140" width="60" height="14" rx="5"/>
+    <!-- Top beam -->
+    <rect x="40" y="48" width="120" height="12" rx="4"/>
+    <!-- Left pan -->
+    <circle cx="56" cy="110" r="24" fill="none" stroke="#ffc800" stroke-width="8"/>
+    <!-- Right pan -->
+    <circle cx="144" cy="110" r="24" fill="none" stroke="#ffc800" stroke-width="8"/>
+    <!-- Left chain -->
+    <rect x="53" y="58" width="6" height="40"/>
+    <!-- Right chain -->
+    <rect x="141" y="58" width="6" height="40"/>
+  </g>
+</svg>
