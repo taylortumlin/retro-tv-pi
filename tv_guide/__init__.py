@@ -7,6 +7,7 @@ Identical behaviour to the legacy `tv_guide.py` monolith. The
 
 from __future__ import annotations
 
+import os
 import secrets
 from pathlib import Path
 
@@ -40,12 +41,19 @@ def create_app() -> Flask:
     )
 
     # Persisted Flask secret key (auto-generated on first run).
+    # O_EXCL makes concurrent gunicorn workers race-safe: the loser gets
+    # FileExistsError and reads the winner's value. 0o600 keeps the key
+    # out of reach of other local users (it signs admin sessions).
     secret_path = Path(__file__).parent.parent / ".admin_secret"
-    if secret_path.exists():
-        flask_app.secret_key = secret_path.read_text().strip()
-    else:
-        flask_app.secret_key = secrets.token_hex(32)
-        secret_path.write_text(flask_app.secret_key)
+    try:
+        fd = os.open(secret_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        try:
+            os.write(fd, secrets.token_hex(32).encode())
+        finally:
+            os.close(fd)
+    except FileExistsError:
+        pass
+    flask_app.secret_key = secret_path.read_text().strip()
 
     flask_app.register_blueprint(api_module.bp, url_prefix="/api")
     flask_app.register_blueprint(stream_module.bp, url_prefix="/stream")
