@@ -12,6 +12,8 @@
 
   const navItems: { view: ViewName; label: string }[] = [
     { view: 'guide', label: 'Guide' },
+    { view: 'upnext', label: 'Up Next' },
+    { view: 'tonight', label: 'Tonight' },
     { view: 'discover', label: 'Discover' },
     { view: 'player', label: 'Player' },
     { view: 'weather', label: 'Weather' },

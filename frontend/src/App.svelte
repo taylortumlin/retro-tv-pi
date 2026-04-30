@@ -7,6 +7,8 @@
   import WeatherView from './views/WeatherView.svelte';
   import AdminView from './views/AdminView.svelte';
   import SearchView from './views/SearchView.svelte';
+  import UpNextView from './views/UpNextView.svelte';
+  import TonightView from './views/TonightView.svelte';
   import ProgramModal from './components/detail/ProgramModal.svelte';
 </script>
 
@@ -24,6 +26,10 @@
       <AdminView />
     {:else if uiStore.activeView === 'search'}
       <SearchView />
+    {:else if uiStore.activeView === 'upnext'}
+      <UpNextView />
+    {:else if uiStore.activeView === 'tonight'}
+      <TonightView />
     {:else}
       <div style="padding: var(--sp-10); text-align: center; color: var(--color-text-muted)">
         <h2 style="font-size: var(--text-2xl); color: var(--color-text); margin-bottom: var(--sp-3)">

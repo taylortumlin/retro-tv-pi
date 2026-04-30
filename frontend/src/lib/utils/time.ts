@@ -46,3 +46,18 @@ export function isLive(startTs: number, stopTs: number): boolean {
 export function clockTime(): string {
   return new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
+
+// Returns [startTs, stopTs] (unix seconds) for tonight's primetime block.
+// If the current time is past the end of today's window, returns tomorrow's.
+export function tonightWindow(startHour = 19, endHour = 23): [number, number] {
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(startHour, 0, 0, 0);
+  const stop = new Date(now);
+  stop.setHours(endHour, 0, 0, 0);
+  if (now.getTime() >= stop.getTime()) {
+    start.setDate(start.getDate() + 1);
+    stop.setDate(stop.getDate() + 1);
+  }
+  return [Math.floor(start.getTime() / 1000), Math.floor(stop.getTime() / 1000)];
+}
