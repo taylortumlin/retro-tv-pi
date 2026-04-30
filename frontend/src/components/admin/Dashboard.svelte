@@ -2,6 +2,7 @@
   import { getStatus } from '../../lib/api/admin';
   import type { SystemStatus } from '../../lib/types/admin';
   import Spinner from '../shared/Spinner.svelte';
+  import { themeStore } from '../../lib/stores/theme.svelte';
 
   let status = $state<SystemStatus | null>(null);
   let loading = $state(true);
@@ -25,6 +26,22 @@
 
 <div class="dashboard">
   <h2>Dashboard</h2>
+
+  <section class="theme-picker">
+    <h3>Theme</h3>
+    <div class="theme-options">
+      {#each themeStore.themes as t}
+        <button
+          class="theme-btn"
+          class:active={themeStore.active === t}
+          onclick={() => themeStore.set(t)}
+        >
+          {themeStore.label(t)}
+        </button>
+      {/each}
+    </div>
+    <p class="theme-hint">Press <kbd>Shift</kbd> + <kbd>T</kbd> to cycle themes.</p>
+  </section>
 
   {#if loading && !status}
     <div class="loading"><Spinner /></div>
@@ -117,6 +134,64 @@
   h2 {
     font-size: var(--text-xl);
     font-weight: var(--font-weight-bold);
+  }
+
+  .theme-picker {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding: var(--sp-4);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .theme-picker h3 {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .theme-options {
+    display: flex;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+  }
+
+  .theme-btn {
+    padding: var(--sp-2) var(--sp-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    transition: all var(--duration-fast) var(--ease-out);
+  }
+
+  .theme-btn:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
+
+  .theme-btn.active {
+    background: var(--color-accent-subtle);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .theme-hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .theme-hint kbd {
+    display: inline-block;
+    padding: 1px var(--sp-1);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
   }
 
   .loading {
