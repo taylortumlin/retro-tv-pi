@@ -2,6 +2,10 @@
 .env
 .admin_secret
 
+# Local site config (PIN, ErsatzTV LAN IP, weather coords).
+# A sanitized template lives at config.example.json -- copy it on first run.
+config.json
+
 # Python
 __pycache__/
 *.pyc

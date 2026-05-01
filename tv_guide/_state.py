@@ -14,8 +14,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
 CONFIG_PATH = ROOT / "config.json"
+EXAMPLE_PATH = ROOT / "config.example.json"
 
-with open(CONFIG_PATH) as f:
+# Fall back to the example if the local config doesn't exist yet (fresh
+# clone, CI, pytest). The example ships sanitized placeholder values --
+# users must `cp config.example.json config.json` and edit before pointing
+# the service at real infrastructure.
+_active = CONFIG_PATH if CONFIG_PATH.exists() else EXAMPLE_PATH
+with open(_active) as f:
     CONFIG = json.load(f)
 
 ERSATZTV_URL: str = CONFIG["ersatztv_url"].rstrip("/")

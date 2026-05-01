@@ -1,13 +1,9 @@
 {
   "admin": {
-    "pin": "1234",
+    "pin": "CHANGE-ME",
     "session_timeout_minutes": 60
   },
   "channels": [
-    {
-      "number": 0,
-      "name": "New This Week"
-    },
     {
       "number": 1,
       "name": "Crime & Justice"
@@ -95,11 +91,15 @@
     {
       "number": 22,
       "name": "All The Shows"
+    },
+    {
+      "number": 1000,
+      "name": "Filler"
     }
   ],
   "default_channel": 6,
   "default_theme": "crt",
-  "ersatztv_url": "http://192.168.1.74:8409",
+  "ersatztv_url": "http://ERSATZTV-HOST:8409",
   "guide_port": 5001,
   "mpv_options": {
     "vo": "drm",
@@ -142,9 +142,9 @@
     "show_now_playing": false,
     "speed": 75,
     "weather": {
-      "latitude": 33.749,
-      "location_name": "Atlanta",
-      "longitude": -84.388,
+      "latitude": 40.7128,
+      "location_name": "New York",
+      "longitude": -74.006,
       "temperature_unit": "fahrenheit"
     },
     "weatherstar_music_url": "",

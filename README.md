@@ -56,7 +56,9 @@ chmod +x setup.sh
 ### 4. Configure & Run
 
 ```bash
-# Edit config with your ErsatzTV IP, weather location, admin PIN
+# config.json is gitignored (it holds your admin PIN, LAN IP, coords).
+# Seed it from the sanitized example, then edit:
+cp ~/pi-tv/config.example.json ~/pi-tv/config.json
 nano ~/pi-tv/config.json
 
 # Build the frontend (run once, and after any frontend change)

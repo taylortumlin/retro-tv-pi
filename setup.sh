@@ -53,8 +53,19 @@ mkdir -p "$INSTALL_DIR/templates" "$INSTALL_DIR/static" "$INSTALL_DIR/frontend"
 
 cp "$SCRIPT_DIR/tv_player.py" "$INSTALL_DIR/"
 cp -r "$SCRIPT_DIR/tv_guide" "$INSTALL_DIR/"
-cp "$SCRIPT_DIR/config.json" "$INSTALL_DIR/"
 cp "$SCRIPT_DIR/requirements.txt" "$INSTALL_DIR/"
+
+# config.json is gitignored (it holds the PIN + LAN IP + coords). On a
+# fresh install, seed it from the sanitized example so the service can
+# start; the user must then edit it.
+if [ -f "$SCRIPT_DIR/config.json" ]; then
+    cp "$SCRIPT_DIR/config.json" "$INSTALL_DIR/config.json"
+elif [ -f "$INSTALL_DIR/config.json" ]; then
+    echo "  --> Keeping existing $INSTALL_DIR/config.json"
+else
+    cp "$SCRIPT_DIR/config.example.json" "$INSTALL_DIR/config.json"
+    echo "  --> Seeded $INSTALL_DIR/config.json from config.example.json -- edit before starting"
+fi
 
 # Copy new modules if they exist
 for f in models.py auth.py widgets.py integrations.py init_db.py; do
