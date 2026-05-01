@@ -81,10 +81,12 @@ mpv --fullscreen "http://<ersatztv-ip>:8409/iptv/channel/1.ts"
 ```
 
 ### Pi Client Files
-See the `pi-client/` directory for:
-- `tv-player.py` - Main player with web control
-- `tv-player.service` - Systemd service for auto-start
-- `config.json` - Channel configuration
+The active code lives at the repo root:
+- `tv_guide/` - Flask web guide server (Blueprints package)
+- `tv_player.py` - mpv hardware player with web control
+- `tv-guide.service` / `tv-player.service` - systemd units
+- `config.json` - channel + weather + news configuration
+- `frontend/` - Svelte 5 SPA source (built into `static/dist/`)
 
 ---
 
