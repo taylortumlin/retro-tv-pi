@@ -93,6 +93,12 @@ def _startup() -> None:
     start_background_refresh()
 
 
+# Module-level so the file handle (and therefore the flock) lives for
+# the lifetime of the process. If this were a function-local, GC would
+# close `f` and release the lock as soon as _startup_once returned.
+_startup_lock_handle = None
+
+
 def _startup_once() -> None:
     """Run _startup() in only one gunicorn worker.
 
@@ -102,19 +108,20 @@ def _startup_once() -> None:
     process-wide flock on /tmp ensures only the winner does the work; the
     others skip and use the shared cache as it gets populated.
     """
+    global _startup_lock_handle
     import fcntl
     import tempfile
     lock_path = Path(tempfile.gettempdir()) / "pi-tv-startup.lock"
-    f = open(lock_path, "w")
+    _startup_lock_handle = open(lock_path, "w")
     try:
-        fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.flock(_startup_lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
-        # Another worker holds the lock -- skip startup work, but the
-        # cache will be populated cooperatively as soon as the first
-        # request hits a lazy-fetch endpoint.
-        f.close()
+        # Another worker holds the lock -- skip startup work. The cache
+        # will be populated by the winning worker; lazy-fetch endpoints
+        # will see the populated cache once it lands.
+        _startup_lock_handle.close()
+        _startup_lock_handle = None
         return
-    # Hold the lock for process lifetime; do NOT close `f`.
     _startup()
 
 
