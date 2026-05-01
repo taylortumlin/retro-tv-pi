@@ -80,9 +80,26 @@ export const notificationsStore = {
 // inline-arrow visibilitychange handler couldn't be removed and stacked
 // on every HMR / explicit re-init, causing check() to fire N times per
 // focus event.
-const onFocus = () => check();
+//
+// Both handlers re-read Notification.permission first: the browser fires
+// no event when the user changes the site's notification permission in
+// settings, so without this re-sync the cached value stays stale until
+// full page reload (and the "Reminder set · notifications blocked" toast
+// keeps showing even after the user un-blocks it).
+function syncPermission() {
+  if (typeof Notification !== 'undefined') {
+    permission = Notification.permission;
+  }
+}
+const onFocus = () => {
+  syncPermission();
+  check();
+};
 const onVisibility = () => {
-  if (document.visibilityState === 'visible') check();
+  if (document.visibilityState === 'visible') {
+    syncPermission();
+    check();
+  }
 };
 let listenersBound = false;
 
