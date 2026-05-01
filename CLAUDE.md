@@ -122,10 +122,13 @@ scope. The user pushes those commits from their own shell.
 
 ## Watch out
 
-- **`config.json` contains personal data** (admin PIN, ErsatzTV LAN IP,
-  weather coords) and is already committed in repo history. Don't add new
-  personal data; if the user ever wants a clean public snapshot, that needs
-  a `git filter-repo` plus a `config.example.json`.
+- **`config.json` is gitignored** (untracked since `54dd4f6`). A sanitized
+  `config.example.json` ships in the repo; users `cp` it to `config.json`
+  and edit. If you need to seed test fixtures or read defaults at import
+  time, `tv_guide/_state.py` already falls back to `config.example.json`
+  when `config.json` is absent. Older history (commits `8cee895` through
+  `027b4cf`) still contains the original PIN / LAN IP / coords; scrubbing
+  that needs `git filter-repo` + force push, which rewrites SHAs.
 
 - **Don't restart `tv-guide` without a smoke check.** A bad import or
   startup error and the service flaps. The unit's `Restart=on-failure`
@@ -150,8 +153,9 @@ frontend/src/         Svelte SPA source
   lib/stores/         *.svelte.ts — runes-based state
   lib/utils/video.ts  createStreamPlayer (mpegts.js + HLS fallback)
 static/dist/          Built SPA bundle (don't edit; rebuild instead)
-templates/            Legacy Jinja, kept for reference; not used at runtime
-config.json           Active config (PIN, ErsatzTV URL, channels, weather, ticker)
+templates/player.html The mpv hardware player's web UI; served by tv_player.py:160
+config.example.json   Sanitized template (committed). Copy to config.json on first run.
+config.json           Local site config — gitignored. PIN / ErsatzTV URL / coords / channels.
 backups/              Rolling 20 config.json snapshots
 .github/workflows/    CI
 ```

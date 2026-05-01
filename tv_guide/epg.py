@@ -104,13 +104,30 @@ def _config_channel_map():
     return {str(c["number"]): c for c in channels}
 
 
-def get_visible_channels():
-    """Return EPG channels filtered by config, with name overrides applied."""
+def snapshot_cache():
+    """Return a coupled (channels, programmes, last_update) snapshot.
+
+    Acquired under cache_lock so the channels list and programmes list
+    are guaranteed to come from the same EPG fetch. Iterating outside the
+    lock is fine -- the lists are immutable refs once published. Without
+    this, a reader between two writes would match NEW programmes against
+    OLD channel ids and silently drop matches.
+    """
+    with _state.cache_lock:
+        return (
+            _state.epg_cache["channels"],
+            _state.epg_cache["programmes"],
+            _state.epg_cache.get("last_update"),
+        )
+
+
+def _apply_visibility(channels):
+    """Filter + apply name overrides from CONFIG. Pure function over the input."""
     cmap = _config_channel_map()
     if cmap is None:
-        return _state.epg_cache["channels"]
+        return channels
     visible = []
-    for ch in _state.epg_cache["channels"]:
+    for ch in channels:
         cc = cmap.get(ch["number"])
         if cc is None:
             continue
@@ -121,18 +138,34 @@ def get_visible_channels():
     return visible
 
 
+def get_visible_channels():
+    """Return EPG channels filtered by config, with name overrides applied.
+
+    Snapshots channels under the lock for use as a standalone call.
+    Callers that already need a coupled (channels, programmes) snapshot
+    should use snapshot_cache() + _apply_visibility() to avoid double-
+    grabbing the lock.
+    """
+    with _state.cache_lock:
+        channels = _state.epg_cache["channels"]
+    return _apply_visibility(channels)
+
+
 def get_filtered_epg():
-    """Return _state.epg_cache filtered to only configured channels."""
-    visible = get_visible_channels()
-    if visible is _state.epg_cache["channels"]:
-        return _state.epg_cache  # no filtering needed
+    """Return a snapshot of _state.epg_cache filtered to configured channels."""
+    channels, programmes, last_update = snapshot_cache()
+    visible = _apply_visibility(channels)
+    if visible is channels:
+        return {
+            "channels": channels,
+            "programmes": programmes,
+            "last_update": last_update,
+        }
     visible_ids = {ch["id"] for ch in visible}
-    programmes = [p for p in _state.epg_cache["programmes"]
-                  if p["channel_id"] in visible_ids]
     return {
         "channels": visible,
-        "programmes": programmes,
-        "last_update": _state.epg_cache.get("last_update"),
+        "programmes": [p for p in programmes if p["channel_id"] in visible_ids],
+        "last_update": last_update,
     }
 
 

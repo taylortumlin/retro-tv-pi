@@ -8,7 +8,13 @@ from datetime import datetime
 from flask import Blueprint, jsonify
 
 from . import _state
-from .epg import fetch_epg, get_visible_channels, get_filtered_epg
+from .epg import (
+    _apply_visibility,
+    fetch_epg,
+    get_filtered_epg,
+    get_visible_channels,
+    snapshot_cache,
+)
 from .weather import fetch_weather
 from .news import fetch_news
 
@@ -32,12 +38,15 @@ def api_epg_refresh():
 def api_now():
     if not _state.epg_cache["channels"]:
         fetch_epg()
+    # Coupled snapshot: channels + programmes from the SAME EPG fetch.
+    # Iterating outside the lock is safe because the references don't mutate.
+    channels, programmes, _ = snapshot_cache()
+    visible = _apply_visibility(channels)
     now_ts = datetime.now().timestamp()
-    visible = get_visible_channels()
     result = []
     for ch in visible:
         current = next(
-            (p for p in _state.epg_cache["programmes"]
+            (p for p in programmes
              if p["channel_id"] == ch["id"]
              and p["start_ts"] <= now_ts < p["stop_ts"]),
             None
@@ -66,10 +75,11 @@ def api_ticker():
     now_ts = datetime.now().timestamp()
     now_playing = []
     if ticker_cfg.get("show_now_playing", True):
-        visible = get_visible_channels()
+        channels, programmes, _ = snapshot_cache()
+        visible = _apply_visibility(channels)
         for ch in visible:
             current = next(
-                (p for p in _state.epg_cache["programmes"]
+                (p for p in programmes
                  if p["channel_id"] == ch["id"]
                  and p["start_ts"] <= now_ts < p["stop_ts"]),
                 None

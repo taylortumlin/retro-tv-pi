@@ -106,7 +106,8 @@ pi-tv/
 ├── PLAN.md                       # Architecture decisions
 ├── IMPLEMENTATION.md             # Setup guide
 ├── CHANNEL_SETUP.md              # Smart collection details
-├── config.json                   # Channels, weather, news, ticker config
+├── config.example.json           # Sanitized template (tracked)
+├── config.json                   # Local site config -- gitignored; cp from example
 ├── setup.sh                      # Pi installer
 ├── requirements.txt              # Python deps (Flask, feedparser, requests, gunicorn)
 ├── tv_guide/                     # Web guide server (Flask Blueprints)
@@ -137,7 +138,8 @@ pi-tv/
 │   ├── icons/                    # PWA icons
 │   ├── manifest.json
 │   └── sw.js                     # Service worker
-├── templates/                    # legacy Jinja templates (kept for reference)
+├── templates/
+│   └── player.html               # mpv hardware player's web UI (tv_player.py:160)
 ├── tv-guide.service              # systemd unit (gunicorn -k gthread --threads 32)
 ├── tv-player.service
 ├── ersatztv/
